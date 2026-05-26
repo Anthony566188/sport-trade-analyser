@@ -4,9 +4,14 @@ from sqlalchemy.orm import Session
 from database import get_db
 from schemas.match_request import MatchRequest
 import services.match_service as service
+from datetime import date
 
 router = APIRouter()
 
 @router.post("/matches")
 def create(match: MatchRequest, db: Session = Depends(get_db)):
     return service.register_match(db, match)
+
+@router.get("/matches/date/{date}")
+def get_matches_by_date(date: date, db: Session = Depends(get_db)):
+    return service.get_matches_by_date(db, date)

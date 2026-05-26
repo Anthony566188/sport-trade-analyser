@@ -13,3 +13,7 @@ def create_match(db, match_data):
     db.refresh(match)
 
     return match
+
+def get_matches_by_date(db, date):
+    matches = db.query(Match).filter(Match.date == date).all()
+    return matches
