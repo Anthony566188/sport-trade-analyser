@@ -1,5 +1,5 @@
 from database import Base
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Date
 
 class Match(Base):
     __tablename__ = "MATCHES"
@@ -12,4 +12,4 @@ class Match(Base):
 
     championship = Column(String)
 
-    date = Column(String)    
+    date = Column(String)
