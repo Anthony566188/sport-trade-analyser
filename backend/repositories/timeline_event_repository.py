@@ -13,3 +13,17 @@ def timeline_register(timeline, db):
     db.refresh(timeline)
 
     return timeline
+
+def update_event(id, update_event, db):
+
+    timeline_event = db.query(TimelineEvent).filter(TimelineEvent.id == id).first()
+
+    if not timeline_event:
+        return {"message": "Timeline not found."}
+
+    timeline_event.event = update_event.event
+
+    db.commit()
+    db.refresh(timeline_event)
+
+    return timeline_event
