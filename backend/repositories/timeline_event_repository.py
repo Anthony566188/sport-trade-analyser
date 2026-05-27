@@ -3,9 +3,12 @@ from models.timeline_event import TimelineEvent
 
 def timeline_register(timeline, db):
     timeline = TimelineEvent(
+        id_match=timeline.id_match,
         minute=timeline.minute,
+        second=timeline.second,
         event=timeline.event,
-        id_match=timeline.id_match
+        description=timeline.description,
+        created_at=timeline.created_at,
     )
 
     db.add(timeline)

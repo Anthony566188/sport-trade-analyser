@@ -8,10 +8,16 @@ class TimelineEvent(Base):
 
     id = Column(Integer, primary_key=True)
 
-    minute = Column(Integer)
-
-    event = Column(String)
-
     id_match = Column(Integer, ForeignKey('MATCHES.id'))
+
+    minute = Column(Integer, nullable=False)
+
+    second = Column(Integer, nullable=False)
+
+    event = Column(String, nullable=False)
+
+    description = Column(String, nullable=True)
+
+    created_at = Column(String, nullable=False)
 
     match = relationship("Match", back_populates="timeline_events")

@@ -1,6 +1,11 @@
-import repositories.timeline_event_repository as repository
+from datetime import datetime
 
-def timeline_register(timeline, db):
+import repositories.timeline_event_repository as repository
+from models.timeline_event import TimelineEvent
+
+
+def timeline_register(timeline: TimelineEvent, db):
+    timeline.created_at = datetime.now()
     return repository.timeline_register(timeline, db)
 
 def update_event(id, update_event, db):
