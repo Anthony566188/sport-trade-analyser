@@ -1,5 +1,7 @@
+from sqlalchemy.orm import relationship
+
 from database import Base
-from sqlalchemy import Column, Integer, String, Date
+from sqlalchemy import Column, Integer, String
 
 class Match(Base):
     __tablename__ = "MATCHES"
@@ -13,3 +15,8 @@ class Match(Base):
     championship = Column(String)
 
     date = Column(String)
+
+    timeline_events = relationship(
+        "TimelineEvent",
+        back_populates="match"
+    )
