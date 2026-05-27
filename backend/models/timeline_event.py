@@ -10,6 +10,8 @@ class TimelineEvent(Base):
 
     id_match = Column(Integer, ForeignKey('MATCHES.id'))
 
+    match = relationship("Match", back_populates="timeline_events")
+
     minute = Column(Integer, nullable=False)
 
     second = Column(Integer, nullable=False)
@@ -19,5 +21,3 @@ class TimelineEvent(Base):
     description = Column(String, nullable=True)
 
     created_at = Column(String, nullable=False)
-
-    match = relationship("Match", back_populates="timeline_events")
