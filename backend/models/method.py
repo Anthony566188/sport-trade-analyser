@@ -1,0 +1,10 @@
+from sqlalchemy import Column, Integer, String
+
+from database import Base
+
+class Method(Base):
+    __tablename__ = "METHODS"
+
+    id = Column(Integer, primary_key=True)
+
+    name = Column(String, unique=True)
