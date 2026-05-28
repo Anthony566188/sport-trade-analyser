@@ -5,7 +5,8 @@ def create_match(db, match_data):
         team_home=match_data.team_home,
         team_away=match_data.team_away,
         championship=match_data.championship,
-        date=match_data.date
+        date=match_data.date,
+        is_neutral_field=match_data.is_neutral_field,
     )
 
     db.add(match)

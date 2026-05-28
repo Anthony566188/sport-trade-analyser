@@ -8,13 +8,15 @@ class Match(Base):
 
     id = Column(Integer, primary_key=True)
 
-    team_home = Column(String)
+    team_home = Column(String, nullable=False)
 
-    team_away = Column(String)
+    team_away = Column(String, nullable=False)
 
     championship = Column(String)
 
-    date = Column(String)
+    date = Column(String, nullable=False)
+
+    is_neutral_field = Column(Integer, nullable=False)
 
     timeline_events = relationship(
         "TimelineEvent",

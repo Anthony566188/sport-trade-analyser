@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 from datetime import date
 
@@ -6,7 +8,8 @@ class MatchRequest(BaseModel):
     team_home: str
     team_away: str
     championship: str
-    date: date
+    date: Optional[date]
+    is_neutral_field: bool = False
 
     class Config:
         from_attributes = True # Permite a integração com o SQLAlchemy
