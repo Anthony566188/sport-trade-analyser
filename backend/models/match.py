@@ -18,7 +18,7 @@ class Match(Base):
 
     is_neutral_field = Column(Integer, nullable=False)
 
-    timeline_events = relationship(
+    timeline_event = relationship(
         "TimelineEvent",
         back_populates="match"
     )

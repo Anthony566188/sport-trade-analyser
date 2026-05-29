@@ -6,7 +6,7 @@ from models.timeline_event import TimelineEvent
 
 
 # Esse schema define o que a API espera receber no corpo da requisição (JSON)
-class TimelineEventRequest(BaseModel):
+class TimelineRequest(BaseModel):
     id_match: int
     minute: int
     second: int

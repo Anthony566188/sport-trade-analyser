@@ -1,0 +1,5 @@
+criar a tabela eventoS e relacionar com linha do tempo
+relacionar criterio com linha do tempo
+REMOVER CREATEDAT
+INICIO E FIM PARA TIMELINE
+regra de negócio para aceitar ou criterio ou evento na timeline

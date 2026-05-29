@@ -24,7 +24,6 @@ def timeline_register(timeline: TimelineEvent, db):
         second=timeline.second,
         event=timeline.event,
         description=timeline.description,
-        created_at=timeline.created_at,
     )
 
     db.add(timeline)
