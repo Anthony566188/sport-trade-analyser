@@ -7,17 +7,18 @@ from models.timeline_event import TimelineEvent
 
 def timeline_register(timeline_event_data: TimelineEvent, db):
 
-    criterion_exists = (
-        db.query(Criterion.id)
-        .filter(Criterion.id == timeline_event_data.id_criterion)
-        .first()
-    )
-
-    if criterion_exists is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Criterion not found."
+    if timeline_event_data.id_criterion != None:
+        criterion_exists = (
+            db.query(Criterion.id)
+            .filter(Criterion.id == timeline_event_data.id_criterion)
+            .first()
         )
+
+        if criterion_exists is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Criterion not found."
+            )
 
     timeline_exists = (
         db.query(Timeline.id)

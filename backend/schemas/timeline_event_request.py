@@ -6,9 +6,9 @@ from models.enums.event_type import EventType
 from models.timeline_event import TimelineEvent
 
 class TimelineEventRequest(BaseModel):
-    id_criterion: int
+    id_criterion: Optional[int]
     id_timeline: int
-    event: EventType
+    event: Optional[EventType]
     minute: int
     second: int
     description: Optional[str] = None
@@ -21,7 +21,7 @@ class TimelineEventRequest(BaseModel):
         return TimelineEvent(
             id_criterion = self.id_criterion,
             id_timeline = self.id_timeline,
-            event = self.event,
+            event = self.event.value if self.event else None,
             minute = self.minute,
             second = self.second,
             description = self.description,

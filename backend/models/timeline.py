@@ -8,7 +8,7 @@ class Timeline(Base):
 
     id = Column(Integer, primary_key=True)
 
-    id_match = Column(Integer, ForeignKey('MATCHES.id'))
+    id_match = Column(Integer, ForeignKey('MATCHES.id'), unique=True)
 
     match = relationship("Match", back_populates="timeline")
 
