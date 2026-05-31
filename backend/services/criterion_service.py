@@ -14,3 +14,7 @@ def update(id, criterion, db):
 
 def delete(id, db):
     return repository.delete(id, db)
+
+
+def get_by_id(id, db):
+    return repository.get_by_id(id, db)

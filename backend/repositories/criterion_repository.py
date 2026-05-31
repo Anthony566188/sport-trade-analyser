@@ -53,3 +53,15 @@ def delete(id: int, db: Session):
     db.commit()
 
     return {"message": "Match deleted."}
+
+
+def get_by_id(id: int, db: Session) -> Criterion:
+    criterion = db.query(Criterion).filter(Criterion.id == id).first()
+
+    if criterion is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Id not found."
+        )
+
+    return criterion

@@ -16,6 +16,10 @@ def create_criterion(request: CriterionRequest, db: Session = Depends(get_db)):
 def get_all_criterions(db: Session = Depends(get_db)):
     return service.get_all(db)
 
+@router.get("/criterion/{id}")
+def get_criterion(id: int, db: Session = Depends(get_db)):
+    return service.get_by_id(id, db)
+
 @router.put("/criterion/{id}")
 def update_criterion(id: int, request: CriterionRequest, db: Session = Depends(get_db)):
     criterion = request.to_entity()
