@@ -22,3 +22,7 @@ def update_timeline_event(id: int, update: UpdateTimelineEvent, db: Session = De
 @router.delete("/timeline-event/{id}")
 def delete(id: int, db: Session = Depends(get_db)):
     return service.delete_event(id, db)
+
+@router.get("/timeline-event/timeline/{id_timeline}")
+def get_by_timeline(id_timeline: int, db: Session = Depends(get_db)):
+    return service.get_by_timeline(id_timeline, db)

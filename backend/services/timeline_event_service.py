@@ -12,3 +12,7 @@ def update_timeline_event(id, update_timeline_event, db):
 
 def delete_event(id, db):
     return repository.delete_event(id, db)
+
+
+def get_by_timeline(id_timeline, db):
+    return repository.get_by_timeline(id_timeline, db)

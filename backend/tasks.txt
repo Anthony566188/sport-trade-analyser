@@ -1,5 +1,6 @@
+Buscar criterio por id
 faz sentido criar um endpoint para listar os tipos de eventos?
-O usuário deve ser capaz de olhar as informações de uma linha do tempo de uma partida passada
+a ORDEM QUE OS ELEMENTOS DE UM OBJETO SÃO RETORNADOS IMPORTA?
 IMPLEMENTAR AMISTOSO (se for amistoso, campeonato tem q ser nulo)
 regra de negócio para aceitar: ou criterio ou evento na timeline
 validação para aceitar 'additional_minute' apenas se o 'minute' for 45

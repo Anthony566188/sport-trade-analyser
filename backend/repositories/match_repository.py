@@ -45,9 +45,6 @@ def update(id: int, match_update: Match, db: Session):
 
     return match
 
-def get_by_id(id: int, db: Session) -> Match:
-    return db.query(Match).filter(Match.id == id).first()
-
 def delete(id: int, db: Session):
     match = db.query(Match).filter(Match.id == id).first()
 

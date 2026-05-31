@@ -27,5 +27,5 @@ class TimelineEventRequest(BaseModel):
             second = self.second,
             additional_minute = self.additional_minute,
             description = self.description,
-            team=self.team
+            team=self.team.upper().strip()
         )

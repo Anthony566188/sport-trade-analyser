@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from sqlalchemy import asc
 from sqlalchemy.orm import Session
 
 from models.criterion import Criterion
@@ -96,3 +97,10 @@ def delete_event(id: int, db: Session):
     db.commit()
 
     return {"message": "Timeline_event deleted."}
+
+
+def get_by_timeline(id_timeline: int, db: Session):
+    return (db.query(TimelineEvent)
+            .filter(TimelineEvent.id_timeline == id_timeline)
+            .order_by(TimelineEvent.minute, TimelineEvent.second)
+            .all())
