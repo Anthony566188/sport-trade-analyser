@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from models.criterion import Criterion
 from models.timeline import Timeline
 from models.timeline_event import TimelineEvent
-from schemas.update_timeline_event import UpdateTimelineEvent
 
 
 def timeline_register(timeline_event_data: TimelineEvent, db):
@@ -40,6 +39,7 @@ def timeline_register(timeline_event_data: TimelineEvent, db):
         event=timeline_event_data.event,
         minute=timeline_event_data.minute,
         second=timeline_event_data.second,
+        additional_minute=timeline_event_data.additional_minute,
         description=timeline_event_data.description,
         team=timeline_event_data.team,
     )
@@ -72,6 +72,7 @@ def update_timeline_event(id: int, update_timeline: TimelineEvent, db: Session):
     timeline_event.event = update_timeline.event
     timeline_event.minute = update_timeline.minute
     timeline_event.second = update_timeline.second
+    timeline_event.additional_minute = update_timeline.additional_minute
     timeline_event.description = update_timeline.description
     timeline_event.team = update_timeline.team
 

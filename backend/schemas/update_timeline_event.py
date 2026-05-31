@@ -11,6 +11,7 @@ class UpdateTimelineEvent(BaseModel):
     event: Optional[EventType]
     minute: int
     second: int
+    additional_minute: Optional[int]
     description: Optional[str]
     team: str
 
@@ -23,6 +24,7 @@ class UpdateTimelineEvent(BaseModel):
             event=self.event.value if self.event else None,
             minute=self.minute,
             second=self.second,
+            additional_minute=self.additional_minute,
             description=self.description,
             team=self.team
         )

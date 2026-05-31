@@ -22,6 +22,8 @@ class TimelineEvent(Base):
 
     second = Column(Integer, nullable=False)
 
+    additional_minute = Column(Integer, nullable=True)
+
     description = Column(String, nullable=True)
 
     team = Column(String, nullable=False)

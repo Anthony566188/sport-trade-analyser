@@ -1,4 +1,5 @@
 regra de negócio para aceitar ou criterio ou evento na timeline
-implementar acrescimo (STOPPAGE_TIME)
+validação para aceitar 'additional_minute' apenas se o 'minute' for 45
 IMPLEMENTAR AMISTOSO
 O minuto do evento não pode ser menor que a data de inicio
+validação para time passado no 'timeline_event' estar contido em 'match'
