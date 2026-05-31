@@ -16,3 +16,8 @@ def create(request: MatchRequest, db: Session = Depends(get_db)):
 @router.get("/matches/date/{date}")
 def get_matches_by_date(date: date, db: Session = Depends(get_db)):
     return service.get_matches_by_date(db, date)
+
+@router.put("/matches/{id}")
+def update_match(id: int, request: MatchRequest, db: Session = Depends(get_db)):
+    match = request.to_entity()
+    return service.update_match(id, match, db)

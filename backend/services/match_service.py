@@ -12,3 +12,6 @@ def register_match(db,match_data):
 def get_matches_by_date(db, date):
     return repository.get_matches_by_date(db,date)
 
+
+def update_match(id, match, db):
+    return repository.update(id, match, db)

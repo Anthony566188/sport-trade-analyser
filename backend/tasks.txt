@@ -1,4 +1,4 @@
-IMPLEMENTAR AMISTOSO (se for amistoso, campeonato é nulo)
+IMPLEMENTAR AMISTOSO (se for amistoso, campeonato tem q ser nulo)
 regra de negócio para aceitar: ou criterio ou evento na timeline
 validação para aceitar 'additional_minute' apenas se o 'minute' for 45
 O minuto do evento não pode ser menor que a data de inicio
