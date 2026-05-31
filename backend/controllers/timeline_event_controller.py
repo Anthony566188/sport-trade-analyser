@@ -15,8 +15,9 @@ def register(request: TimelineEventRequest, db: Session = Depends(get_db)):
     return service.timeline_register(timeline, db)
 
 @router.put("/timeline-event/{id}")
-def update_event(id: int, update_event: UpdateTimelineEvent, db: Session = Depends(get_db)):
-    return service.update_event(id, update_event, db)
+def update_timeline_event(id: int, update: UpdateTimelineEvent, db: Session = Depends(get_db)):
+    update_timeline_event = update.to_entity()
+    return service.update_timeline_event(id, update_timeline_event, db)
 
 @router.delete("/timeline-event/{id}")
 def delete(id: int, db: Session = Depends(get_db)):

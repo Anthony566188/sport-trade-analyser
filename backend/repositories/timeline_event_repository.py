@@ -1,8 +1,10 @@
 from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
 from models.criterion import Criterion
 from models.timeline import Timeline
 from models.timeline_event import TimelineEvent
+from schemas.update_timeline_event import UpdateTimelineEvent
 
 
 def timeline_register(timeline_event_data: TimelineEvent, db):
@@ -48,9 +50,9 @@ def timeline_register(timeline_event_data: TimelineEvent, db):
 
     return timeline_event
 
-def update_event(id, update_event, db):
+def update_timeline_event(id: int, update_timeline: TimelineEvent, db: Session):
 
-    timeline_event = db.query(TimelineEvent).filter(TimelineEvent.id == id).first()
+    timeline_event: TimelineEvent = db.query(TimelineEvent).filter(TimelineEvent.id == id).first()
 
     if timeline_event is None:
         raise HTTPException(
@@ -58,14 +60,27 @@ def update_event(id, update_event, db):
             detail="Id not found."
         )
 
-    timeline_event.event = update_event.event
+    if update_timeline.id_criterion != None:
+        criterion_existis: TimelineEvent = db.query(Criterion).filter(Criterion.id == update_timeline.id_criterion).first()
+        if criterion_existis is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Criterion not found."
+            )
+
+    timeline_event.id_criterion = update_timeline.id_criterion
+    timeline_event.event = update_timeline.event
+    timeline_event.minute = update_timeline.minute
+    timeline_event.second = update_timeline.second
+    timeline_event.description = update_timeline.description
+    timeline_event.team = update_timeline.team
 
     db.commit()
     db.refresh(timeline_event)
 
     return timeline_event
 
-def delete_event(id, db):
+def delete_event(id: int, db: Session):
     timeline_event = db.query(TimelineEvent).filter(TimelineEvent.id == id)\
         .first()
 
@@ -79,4 +94,4 @@ def delete_event(id, db):
 
     db.commit()
 
-    return {"message": "Timeline deleted."}
+    return {"message": "Timeline_event deleted."}
