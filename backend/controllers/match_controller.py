@@ -21,3 +21,7 @@ def get_matches_by_date(date: date, db: Session = Depends(get_db)):
 def update_match(id: int, request: MatchRequest, db: Session = Depends(get_db)):
     match = request.to_entity()
     return service.update_match(id, match, db)
+
+@router.delete("/matches/{id}")
+def delete_match(id: int, db: Session = Depends(get_db)):
+    return service.delete(id, db)

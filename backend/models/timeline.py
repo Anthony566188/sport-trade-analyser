@@ -18,5 +18,6 @@ class Timeline(Base):
 
     timeline_event = relationship(
         "TimelineEvent",
-        back_populates="timeline"
+        back_populates="timeline",
+        cascade="all, delete-orphan",
     )

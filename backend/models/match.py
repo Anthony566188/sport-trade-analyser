@@ -22,5 +22,7 @@ class Match(Base):
 
     timeline = relationship(
         "Timeline",
-        back_populates="match"
+        back_populates="match",
+        uselist=False, # relacionamento 1 para 1
+        cascade="all, delete-orphan", 
     )

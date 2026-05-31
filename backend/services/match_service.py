@@ -15,3 +15,7 @@ def get_matches_by_date(db, date):
 
 def update_match(id, match, db):
     return repository.update(id, match, db)
+
+
+def delete(id, db):
+    return repository.delete(id, db)

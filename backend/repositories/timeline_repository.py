@@ -30,7 +30,6 @@ def create(timeline: Timeline, db: Session):
 
     return timeline
 
-
 def stop(id: int, minute_finished: int, db: Session):
     timeline = db.query(Timeline).filter(Timeline.id == id)\
         .first()
@@ -47,3 +46,19 @@ def stop(id: int, minute_finished: int, db: Session):
     db.refresh(timeline)
 
     return {"message": f"Timeline id {id} Stopped"}
+
+def delete(id: int, db: Session):
+    timeline = db.query(Timeline).filter(Timeline.id == id) \
+        .first()
+
+    if timeline is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Id not found."
+        )
+
+    db.delete(timeline)
+
+    db.commit()
+
+    return {"message": "Timeline deleted."}
