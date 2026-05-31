@@ -7,6 +7,7 @@ def create_match(db, match_data):
         championship=match_data.championship,
         date=match_data.date,
         is_neutral_field=match_data.is_neutral_field,
+        is_friendly=match_data.is_friendly,
     )
 
     db.add(match)

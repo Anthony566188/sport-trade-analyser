@@ -1,7 +1,5 @@
-O campeonato não pode ser obrigatório
-remover espaços no registro do jogo
-regra de negócio para aceitar ou criterio ou evento na timeline
+IMPLEMENTAR AMISTOSO (se for amistoso, campeonato é nulo)
+regra de negócio para aceitar: ou criterio ou evento na timeline
 validação para aceitar 'additional_minute' apenas se o 'minute' for 45
-IMPLEMENTAR AMISTOSO
 O minuto do evento não pode ser menor que a data de inicio
 validação para time passado no 'timeline_event' estar contido em 'match'

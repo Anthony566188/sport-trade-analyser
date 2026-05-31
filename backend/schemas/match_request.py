@@ -9,9 +9,10 @@ from models.match import Match
 class MatchRequest(BaseModel):
     team_home: str
     team_away: str
-    championship: str
+    championship: Optional[str]
     date: Optional[date]
     is_neutral_field: bool = False
+    is_friendly: bool = False
 
     class Config:
         from_attributes = True # Permite a integração com o SQLAlchemy
@@ -20,7 +21,8 @@ class MatchRequest(BaseModel):
         return Match(
             team_home=self.team_home.upper().strip(),
             team_away=self.team_away.upper().strip(),
-            championship=self.championship.upper().strip(),
+            championship=self.championship.upper().strip() if self.championship else None,
             date=self.date,
-            is_neutral_field=self.is_neutral_field
+            is_neutral_field=self.is_neutral_field,
+            is_friendly=self.is_friendly,
         )

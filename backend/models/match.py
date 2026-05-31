@@ -18,6 +18,8 @@ class Match(Base):
 
     is_neutral_field = Column(Integer, nullable=False)
 
+    is_friendly = Column(Integer, nullable=False)
+
     timeline = relationship(
         "Timeline",
         back_populates="match"
