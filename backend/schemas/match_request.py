@@ -3,7 +3,9 @@ from typing import Optional
 from pydantic import BaseModel
 from datetime import date
 
-# Esse schema define o que a API espera receber no corpo da requisição (JSON)
+from models.match import Match
+
+
 class MatchRequest(BaseModel):
     team_home: str
     team_away: str
@@ -13,3 +15,12 @@ class MatchRequest(BaseModel):
 
     class Config:
         from_attributes = True # Permite a integração com o SQLAlchemy
+
+    def to_entity(self) -> Match:
+        return Match(
+            team_home=self.team_home.upper(),
+            team_away=self.team_away.upper(),
+            championship=self.championship.upper(),
+            date=self.date,
+            is_neutral_field=self.is_neutral_field
+        )

@@ -9,7 +9,8 @@ from datetime import date
 router = APIRouter()
 
 @router.post("/matches")
-def create(match: MatchRequest, db: Session = Depends(get_db)):
+def create(request: MatchRequest, db: Session = Depends(get_db)):
+    match = request.to_entity()
     return service.register_match(db, match)
 
 @router.get("/matches/date/{date}")
