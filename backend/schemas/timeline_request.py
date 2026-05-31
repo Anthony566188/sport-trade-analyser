@@ -1,26 +1,17 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
-from models.timeline_event import TimelineEvent
+from models.timeline import Timeline
 
 
-# Esse schema define o que a API espera receber no corpo da requisição (JSON)
 class TimelineRequest(BaseModel):
     id_match: int
-    minute: int
-    second: int
-    event: str
-    description: Optional[str] = None
+    minute_started: int
 
     class Config:
         from_attributes = True # Permite a integração com o SQLAlchemy
 
-    def to_entity(self) -> TimelineEvent:
-        return TimelineEvent(
+    def to_entity(self) -> Timeline:
+        return Timeline(
             id_match = self.id_match,
-            minute = self.minute,
-            second = self.second,
-            event = self.event,
-            description = self.description,
+            minute_started = self.minute_started,
         )

@@ -1,3 +1,4 @@
 regra de negócio para aceitar ou criterio ou evento na timeline
 implementar acrescimo (STOPPAGE_TIME)
 IMPLEMENTAR AMISTOSO
+O minuto do evento não pode ser menor que a data de inicio

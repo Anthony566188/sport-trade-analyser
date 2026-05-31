@@ -4,13 +4,13 @@ from database import get_db
 
 import services.timeline_event_service as service
 
-from schemas.timeline_request import TimelineRequest
+from schemas.timeline_event_request import TimelineEventRequest
 from schemas.update_timeline_event import UpdateTimelineEvent
 
 router = APIRouter()
 
 @router.post("/timeline-event")
-def register(request: TimelineRequest, db: Session = Depends(get_db)):
+def register(request: TimelineEventRequest, db: Session = Depends(get_db)):
     timeline = request.to_entity()
     return service.timeline_register(timeline, db)
 

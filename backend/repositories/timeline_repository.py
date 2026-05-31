@@ -1,12 +1,27 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from models.match import Match
 from models.timeline import Timeline
 
 
-def create(minute_started: int, db: Session):
+def create(timeline: Timeline, db: Session):
+
+    match_exists = (
+        db.query(Match.id)
+        .filter(Match.id == timeline.id_match)
+        .first()
+    )
+
+    if match_exists is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Method not found."
+        )
+
     timeline = Timeline(
-        minute_started=minute_started
+        id_match=timeline.id_match,
+        minute_started=timeline.minute_started
     )
 
     db.add(timeline)
@@ -31,4 +46,4 @@ def stop(id: int, minute_finished: int, db: Session):
     db.commit()
     db.refresh(timeline)
 
-    return {"message": f"Timeline de {id} Stopped"}
+    return {"message": f"Timeline id {id} Stopped"}

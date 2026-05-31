@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-import models.event
 
 from controllers.match_controller import router as match_controller
 from controllers.timeline_event_controller import router as timeline_event_controller

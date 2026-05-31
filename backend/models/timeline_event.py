@@ -8,14 +8,6 @@ class TimelineEvent(Base):
 
     id = Column(Integer, primary_key=True)
 
-    id_match = Column(Integer, ForeignKey('MATCHES.id'))
-
-    match = relationship("Match", back_populates="timeline_event")
-
-    id_event = Column(Integer, ForeignKey('EVENTS.id'))
-
-    event = relationship("Event", back_populates="timeline_event")
-
     id_criterion = Column(Integer, ForeignKey('CRITERIA.id'))
 
     criterion = relationship("Criterion", back_populates="timeline_event")
@@ -24,10 +16,12 @@ class TimelineEvent(Base):
 
     timeline = relationship("Timeline", back_populates="timeline_event")
 
+    event = Column(String, nullable=True, unique=True)
+
     minute = Column(Integer, nullable=False)
 
     second = Column(Integer, nullable=False)
 
     description = Column(String, nullable=True)
 
-    team = Column(String, nullable=True)
+    team = Column(String, nullable=False)
