@@ -1,3 +1,5 @@
+O campeonato não pode ser obrigatório
+remover espaços no registro do jogo
 regra de negócio para aceitar ou criterio ou evento na timeline
 validação para aceitar 'additional_minute' apenas se o 'minute' for 45
 IMPLEMENTAR AMISTOSO

@@ -18,9 +18,9 @@ class MatchRequest(BaseModel):
 
     def to_entity(self) -> Match:
         return Match(
-            team_home=self.team_home.upper(),
-            team_away=self.team_away.upper(),
-            championship=self.championship.upper(),
+            team_home=self.team_home.upper().strip(),
+            team_away=self.team_away.upper().strip(),
+            championship=self.championship.upper().strip(),
             date=self.date,
             is_neutral_field=self.is_neutral_field
         )
