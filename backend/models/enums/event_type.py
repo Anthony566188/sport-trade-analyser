@@ -11,5 +11,4 @@ class EventType(Enum):
     HIT_WOODWORK = "HIT_WOODWORK"
     GOALKEEPER_SAVE = "GOALKEEPER_SAVE"
     PENALTY = "PENALTY"
-    VAR = "VAR"
 

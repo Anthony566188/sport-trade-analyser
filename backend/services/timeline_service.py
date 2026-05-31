@@ -5,3 +5,7 @@ def create(timeline, db):
 
 def stop(id, minute_finished, db):
     return repository.stop(id, minute_finished, db)
+
+
+def get_by_match(id_match, db):
+    return repository.get_by_match(id_match, db)

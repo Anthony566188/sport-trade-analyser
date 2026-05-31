@@ -62,3 +62,8 @@ def delete(id: int, db: Session):
     db.commit()
 
     return {"message": "Timeline deleted."}
+
+
+def get_by_match(id_match: int, db: Session) -> Timeline:
+    timeline = db.query(Timeline).filter(Timeline.id_match == id_match).first()
+    return timeline

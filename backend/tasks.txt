@@ -1,5 +1,8 @@
+faz sentido criar um endpoint para listar os tipos de eventos?
+O usuário deve ser capaz de olhar as informações de uma linha do tempo de uma partida passada
 IMPLEMENTAR AMISTOSO (se for amistoso, campeonato tem q ser nulo)
 regra de negócio para aceitar: ou criterio ou evento na timeline
 validação para aceitar 'additional_minute' apenas se o 'minute' for 45
 O minuto do evento não pode ser menor que a data de inicio
 validação para time passado no 'timeline_event' estar contido em 'match'
+Não pode haver mais de um timeline com 'minute_finished' null
