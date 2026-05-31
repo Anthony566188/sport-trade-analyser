@@ -13,6 +13,6 @@ class CriterionRequest(BaseModel):
 
     def to_entity(self) -> Criterion:
         return Criterion(
-            title=self.title,
-            description=self.description
+            title=self.title.strip(),
+            description=self.description.strip() if self.description else None,
         )
