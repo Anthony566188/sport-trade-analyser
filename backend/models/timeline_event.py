@@ -16,6 +16,10 @@ class TimelineEvent(Base):
 
     timeline = relationship("Timeline", back_populates="timeline_event")
 
+    id_bet = Column(Integer, ForeignKey('BETS.id'))
+
+    bet = relationship("Bet", back_populates="timeline_event")
+
     event = Column(String, nullable=True, unique=True)
 
     minute = Column(Integer, nullable=False)

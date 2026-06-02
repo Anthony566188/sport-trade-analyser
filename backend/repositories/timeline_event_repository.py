@@ -1,5 +1,4 @@
 from fastapi import HTTPException
-from sqlalchemy import asc
 from sqlalchemy.orm import Session
 
 from models.criterion import Criterion
