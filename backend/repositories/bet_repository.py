@@ -27,3 +27,16 @@ def create(bet_data: Bet, db: Session):
     db.refresh(bet)
 
     return bet
+
+
+def get_by_id(id: int, db: Session):
+
+    bet_exists = db.query(Bet).filter(Bet.id == id).first()
+
+    if bet_exists is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Bet not found"
+        )
+
+    return bet_exists

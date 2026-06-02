@@ -11,3 +11,7 @@ router = APIRouter()
 def create_bet(request: BetRequest, db: Session = Depends(get_db)):
     bet = request.to_entity()
     return service.create(bet, db)
+
+@router.get("/bet/{id}")
+def get_by_id(id: int, db: Session = Depends(get_db)):
+    return service.get_by_id(id, db)

@@ -99,6 +99,15 @@ def delete_event(id: int, db: Session):
 
 
 def get_by_timeline(id_timeline: int, db: Session):
+
+    timeline_exists = db.query(Timeline).filter(Timeline.id == id_timeline).first()
+
+    if timeline_exists is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Timeline not found."
+        )
+
     return (db.query(TimelineEvent)
             .filter(TimelineEvent.id_timeline == id_timeline)
             .order_by(TimelineEvent.minute, TimelineEvent.second)
