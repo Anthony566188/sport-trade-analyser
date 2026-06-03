@@ -20,6 +20,7 @@ def create(bet_data: Bet, db: Session):
         id_method = bet_data.id_method,
         entry_odd = bet_data.entry_odd,
         type= bet_data.type,
+        date= bet_data.date,
     )
 
     db.add(bet)

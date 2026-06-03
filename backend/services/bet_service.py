@@ -1,6 +1,9 @@
+from datetime import datetime
+
 import repositories.bet_repository as repository
 
 def create(bet, db):
+    bet.date = datetime.now()
     return repository.create(bet, db)
 
 

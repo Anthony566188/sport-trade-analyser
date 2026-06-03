@@ -1,3 +1,5 @@
+colocar data na tabela 'BETS'?
+
 a ORDEM QUE OS ELEMENTOS DE UM OBJETO SÃO RETORNADOS IMPORTA?
 
 IMPLEMENTAR AMISTOSO (se for amistoso, campeonato tem q ser nulo)

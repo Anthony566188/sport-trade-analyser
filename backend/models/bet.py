@@ -18,6 +18,8 @@ class Bet(Base):
 
     exit_odd = Column(Numeric, nullable=True)
 
+    date = Column(String, nullable=False)
+
     timeline_event = relationship(
         "TimelineEvent",
         back_populates="bet",
