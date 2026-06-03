@@ -19,3 +19,7 @@ def update_match(id, match, db):
 
 def delete(id, db):
     return repository.delete(id, db)
+
+
+def get_by_id(id, db):
+    return repository.get_by_id(id, db)
