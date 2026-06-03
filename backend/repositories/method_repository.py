@@ -52,3 +52,14 @@ def delete(id, db):
     db.commit()
 
     return {"message": "Method deleted."}
+
+def get_by_id(id, db):
+    method_exists = db.query(Method).filter(Method.id == id).first()
+
+    if method_exists is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Method not found."
+        )
+
+    return method_exists

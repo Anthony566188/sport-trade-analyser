@@ -50,3 +50,9 @@ def exit_bet(id: int, bet: Bet, db: Session):
     db.refresh(bet)
 
     return {"message": f"Bet id {id} encerrada!"}
+
+
+def update(bet: Bet, db: Session):
+    db.commit()
+    db.refresh(bet)
+    return bet
