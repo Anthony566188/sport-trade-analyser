@@ -26,8 +26,19 @@ def get_matches_by_date(db, date):
     return repository.get_matches_by_date(db,date)
 
 
-def update_match(id, match, db):
-    return repository.update(id, match, db)
+def update_match(id, match_updated, db):
+    match = repository.get_by_id(id, db)
+
+    match.team_home = match_updated.team_home
+    match.team_away = match_updated.team_away
+    match.home_goals = match_updated.home_goals
+    match.away_goals = match_updated.away_goals
+    match.championship = match_updated.championship
+    match.date = match_updated.date
+    match.is_neutral_field = match_updated.is_neutral_field
+    match.is_friendly = match_updated.is_friendly
+
+    return repository.update(match, db)
 
 
 def delete(id, db):
