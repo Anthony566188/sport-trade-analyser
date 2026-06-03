@@ -1,12 +1,13 @@
 from pydantic import BaseModel
-
+from decimal import Decimal
 from models.bet import Bet
 from models.enums.bet_type import BetType
 
 
 class BetRequest(BaseModel):
     id_method: int
-    entry_odd: float
+    stake: Decimal
+    entry_odd: Decimal
     type: BetType
 
     class Config:
@@ -15,6 +16,7 @@ class BetRequest(BaseModel):
     def to_entity(self) -> Bet:
         return Bet(
             id_method = self.id_method,
+            stake = self.stake,
             entry_odd = self.entry_odd,
             type = self.type.value,
         )

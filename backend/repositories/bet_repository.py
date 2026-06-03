@@ -18,6 +18,7 @@ def create(bet_data: Bet, db: Session):
 
     bet = Bet(
         id_method = bet_data.id_method,
+        stake = bet_data.stake,
         entry_odd = bet_data.entry_odd,
         type= bet_data.type,
         date= bet_data.date,
@@ -43,17 +44,7 @@ def get_by_id(id: int, db: Session):
     return bet_exists
 
 
-def exit_bet(id: int, exit_odd: float, db: Session):
-    bet: Bet = db.query(Bet).filter(Bet.id == id) \
-        .first()
-
-    if bet is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Id not found."
-        )
-
-    bet.exit_odd = exit_odd
+def exit_bet(id: int, bet: Bet, db: Session):
 
     db.commit()
     db.refresh(bet)

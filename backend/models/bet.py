@@ -12,6 +12,8 @@ class Bet(Base):
 
     method = relationship("Method", back_populates="bet")
 
+    stake = Column(Numeric, nullable=False)
+
     entry_odd = Column(Numeric, nullable=False)
 
     type = Column(String, nullable=False)
@@ -19,6 +21,8 @@ class Bet(Base):
     exit_odd = Column(Numeric, nullable=True)
 
     date = Column(String, nullable=False)
+
+    profit_in_money = Column(Numeric(10, 2), nullable=True)
 
     timeline_event = relationship(
         "TimelineEvent",
