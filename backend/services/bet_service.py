@@ -9,3 +9,7 @@ def create(bet, db):
 
 def get_by_id(id, db):
     return repository.get_by_id(id, db)
+
+
+def exit(id, exit_odd, db):
+    return repository.exit_bet(id, exit_odd, db)
