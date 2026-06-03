@@ -56,3 +56,9 @@ def update(bet: Bet, db: Session):
     db.commit()
     db.refresh(bet)
     return bet
+
+def delete(bet, db: Session):
+    db.delete(bet)
+    db.commit()
+
+    return {"message": "Bet deleted."}

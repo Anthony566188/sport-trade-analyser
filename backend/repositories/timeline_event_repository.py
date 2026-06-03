@@ -5,22 +5,21 @@ from models.criterion import Criterion
 from models.timeline import Timeline
 from models.timeline_event import TimelineEvent
 
+import repositories.bet_repository as bet_repository
+import repositories.criterion_repository as criterion_repository
+
 
 def timeline_register(timeline_event_data: TimelineEvent, db):
 
+    # Se for passado um 'criterio', verifica se ele existe
     if timeline_event_data.id_criterion != None:
-        criterion_exists = (
-            db.query(Criterion.id)
-            .filter(Criterion.id == timeline_event_data.id_criterion)
-            .first()
-        )
+        criterion_repository.get_by_id(timeline_event_data.id_criterion, db)
 
-        if criterion_exists is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Criterion not found."
-            )
+    # Se for passado uma 'bet', verifica se ela existe
+    if timeline_event_data.id_bet != None:
+        bet_repository.get_by_id(timeline_event_data.id_bet, db)
 
+    # Verifica se a 'timeline' existe
     timeline_exists = (
         db.query(Timeline.id)
         .filter(Timeline.id == timeline_event_data.id_timeline)
@@ -36,6 +35,7 @@ def timeline_register(timeline_event_data: TimelineEvent, db):
     timeline_event = TimelineEvent(
         id_criterion=timeline_event_data.id_criterion,
         id_timeline=timeline_event_data.id_timeline,
+        id_bet=timeline_event_data.id_bet,
         event=timeline_event_data.event,
         minute=timeline_event_data.minute,
         second=timeline_event_data.second,

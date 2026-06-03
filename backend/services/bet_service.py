@@ -40,3 +40,8 @@ def update(id: int, updated_bet: Bet, db: Session):
     bet.exit_odd = updated_bet.exit_odd
 
     return repository.update(bet, db)
+
+
+def delete(id, db):
+    bet_exists = repository.get_by_id(id, db)
+    return repository.delete(bet_exists, db)

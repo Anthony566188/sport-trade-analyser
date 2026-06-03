@@ -29,3 +29,7 @@ def update_bet(id: int, request: UpdateBetRequest, db: Session = Depends(get_db)
         return service.update(id, updated_bet, db)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/bet/{id}")
+def delete_bet(id: int, db: Session = Depends(get_db)):
+    return service.delete(id, db)

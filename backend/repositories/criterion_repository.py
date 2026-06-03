@@ -61,7 +61,7 @@ def get_by_id(id: int, db: Session) -> Criterion:
     if criterion is None:
         raise HTTPException(
             status_code=404,
-            detail="Id not found."
+            detail="Criterion not found."
         )
 
     return criterion

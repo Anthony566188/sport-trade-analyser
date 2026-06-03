@@ -8,6 +8,7 @@ from models.timeline_event import TimelineEvent
 class TimelineEventRequest(BaseModel):
     id_criterion: Optional[int]
     id_timeline: int
+    id_bet: Optional[int]
     event: Optional[EventType]
     minute: int
     second: int
@@ -22,6 +23,7 @@ class TimelineEventRequest(BaseModel):
         return TimelineEvent(
             id_criterion = self.id_criterion,
             id_timeline = self.id_timeline,
+            id_bet = self.id_bet,
             event = self.event.value if self.event else None,
             minute = self.minute,
             second = self.second,

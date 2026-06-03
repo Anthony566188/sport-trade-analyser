@@ -27,4 +27,5 @@ class Bet(Base):
     timeline_event = relationship(
         "TimelineEvent",
         back_populates="bet",
+        cascade = "all, delete-orphan",
     )
