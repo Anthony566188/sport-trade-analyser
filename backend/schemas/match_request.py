@@ -9,6 +9,8 @@ from models.match import Match
 class MatchRequest(BaseModel):
     team_home: str
     team_away: str
+    home_goals: int = 0
+    away_goals: int = 0
     championship: Optional[str]
     date: Optional[date]
     is_neutral_field: bool = False
@@ -21,6 +23,8 @@ class MatchRequest(BaseModel):
         return Match(
             team_home=self.team_home.upper().strip(),
             team_away=self.team_away.upper().strip(),
+            home_goals=self.home_goals,
+            away_goals=self.away_goals,
             championship=self.championship.upper().strip() if self.championship else None,
             date=self.date,
             is_neutral_field=self.is_neutral_field,

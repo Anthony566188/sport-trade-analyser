@@ -3,16 +3,7 @@ from sqlalchemy.orm import Session
 
 from models.match import Match
 
-def create_match(db, match_data):
-    match = Match(
-        team_home=match_data.team_home,
-        team_away=match_data.team_away,
-        championship=match_data.championship,
-        date=match_data.date,
-        is_neutral_field=match_data.is_neutral_field,
-        is_friendly=match_data.is_friendly,
-    )
-
+def create_match(db, match):
     db.add(match)
     db.commit()
     db.refresh(match)

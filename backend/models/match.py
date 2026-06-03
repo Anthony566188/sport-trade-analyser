@@ -12,6 +12,10 @@ class Match(Base):
 
     team_away = Column(String, nullable=False)
 
+    home_goals = Column(Integer, nullable=False)
+
+    away_goals = Column(Integer, nullable=False)
+
     championship = Column(String)
 
     date = Column(String, nullable=False)

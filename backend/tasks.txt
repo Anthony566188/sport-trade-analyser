@@ -1,4 +1,3 @@
-validação para time passado no 'timeline_event' estar contido em 'match' (buscar 'match' por id)
 colocar campos 'home_goal' e 'away_goal' em 'math'?
 deve ter 'second' em timeline?
 Devo criar um campo 'team' em 'bet'?
@@ -9,3 +8,4 @@ regra de negócio para aceitar: ou criterio, ou evento, ou bet na timeline_event
 validação para aceitar 'additional_minute' apenas se o 'minute' for 45
 O minuto do evento não pode ser menor que a data de inicio
 Não pode haver mais de um timeline com 'minute_finished' null
+validação para time passado no 'timeline_event' estar contido em 'match'
