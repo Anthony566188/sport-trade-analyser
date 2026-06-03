@@ -26,7 +26,6 @@ def exit_bet(id: int, exit_odd: Decimal, db: Session = Depends(get_db)):
 def update_bet(id: int, request: UpdateBetRequest, db: Session = Depends(get_db)):
     updated_bet = request.to_entity()
     try:
-        service.update(id, updated_bet, db)
+        return service.update(id, updated_bet, db)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    #return service.update(id, updated_bet, db)
