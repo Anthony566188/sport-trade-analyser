@@ -21,10 +21,8 @@ def register_match(db,match_data):
 
     return repository.create_match(db,match)
 
-
 def get_matches_by_date(db, date):
     return repository.get_matches_by_date(db,date)
-
 
 def update_match(id, match_updated, db):
     match = repository.get_by_id(id, db)
@@ -40,10 +38,8 @@ def update_match(id, match_updated, db):
 
     return repository.update(match, db)
 
-
 def delete(id, db):
     return repository.delete(id, db)
-
 
 def get_by_id(id, db):
     return repository.get_by_id(id, db)

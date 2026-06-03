@@ -16,7 +16,7 @@ def create(timeline: Timeline, db: Session):
     if match_exists is None:
         raise HTTPException(
             status_code=404,
-            detail="Method not found."
+            detail="Match not found."
         )
 
     timeline = Timeline(
@@ -63,7 +63,17 @@ def delete(id: int, db: Session):
 
     return {"message": "Timeline deleted."}
 
-
 def get_by_match(id_match: int, db: Session) -> Timeline:
     timeline = db.query(Timeline).filter(Timeline.id_match == id_match).first()
+    return timeline
+
+def get_by_id(id: int, db: Session) -> Timeline:
+    timeline = db.query(Timeline).filter(Timeline.id == id).first()
+
+    if timeline is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Timeline not found."
+        )
+
     return timeline

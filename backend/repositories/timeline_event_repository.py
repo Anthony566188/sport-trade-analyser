@@ -97,7 +97,6 @@ def delete_event(id: int, db: Session):
 
     return {"message": "Timeline_event deleted."}
 
-
 def get_by_timeline(id_timeline: int, db: Session):
 
     timeline_exists = db.query(Timeline).filter(Timeline.id == id_timeline).first()
