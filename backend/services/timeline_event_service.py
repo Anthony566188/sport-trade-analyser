@@ -37,6 +37,21 @@ def timeline_register(timeline_event_data: TimelineEvent, db):
 
         match_repository.update(match, db)
 
+    # Regra de negócio: Exatamente UM campo (entre: id_criterion, id_bet e event) deve estar preenchido
+    campos_preenchidos = sum([
+        1 for campo in [
+            timeline_event_data.id_criterion,
+            timeline_event_data.id_bet,
+            timeline_event_data.event
+        ] if campo is not None
+    ])
+    if campos_preenchidos != 1:
+        raise ValueError(
+            "É obrigatório associar exatamente UM dos campos "
+            "(id_criterion, id_bet ou event). Não é permitido enviar mais de um, nem nenhum."
+        )
+
+
     timeline_event = TimelineEvent(
         id_criterion=timeline_event_data.id_criterion,
         id_timeline=timeline_event_data.id_timeline,
@@ -52,11 +67,25 @@ def timeline_register(timeline_event_data: TimelineEvent, db):
 
 def update_timeline_event(id, update_timeline_event: TimelineEvent, db):
     # Busca o timeline_event
-    timeline_event = repository.get_by_id(id, db)
+    timeline_event: TimelineEvent = repository.get_by_id(id, db)
 
     # Se for passado um critério, verifica se ele existe
     if update_timeline_event.id_criterion != None:
         criterion_existis: Criterion = criterion_repository.get_by_id(update_timeline_event.id_criterion, db)
+
+    # Regra de negócio: Exatamente UM campo deve estar preenchido
+    campos_preenchidos = sum([
+        1 for campo in [
+            timeline_event.id_bet,
+            update_timeline_event.event,
+            update_timeline_event.id_criterion
+        ] if campo is not None
+    ])
+    if campos_preenchidos != 1:
+        raise ValueError(
+            "Regra de Negócio: É obrigatório associar exatamente UM dos campos "
+            "(id_criterion ou event). Não é permitido enviar mais de um, nem nenhum."
+        )
 
     timeline_event.id_criterion = update_timeline_event.id_criterion
     timeline_event.event = update_timeline_event.event

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 
@@ -12,12 +12,18 @@ router = APIRouter()
 @router.post("/timeline-event")
 def register(request: TimelineEventRequest, db: Session = Depends(get_db)):
     timeline = request.to_entity()
-    return service.timeline_register(timeline, db)
+    try:
+        return service.timeline_register(timeline, db)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/timeline-event/{id}")
 def update_timeline_event(id: int, update: UpdateTimelineEvent, db: Session = Depends(get_db)):
     update_timeline_event = update.to_entity()
-    return service.update_timeline_event(id, update_timeline_event, db)
+    try:
+        return service.update_timeline_event(id, update_timeline_event, db)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/timeline-event/{id}")
 def delete(id: int, db: Session = Depends(get_db)):
