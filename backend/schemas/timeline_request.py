@@ -5,7 +5,7 @@ from models.timeline import Timeline
 
 class TimelineRequest(BaseModel):
     id_match: int
-    minute_started: int
+    minute_second_started: int
 
     class Config:
         from_attributes = True # Permite a integração com o SQLAlchemy
@@ -13,5 +13,5 @@ class TimelineRequest(BaseModel):
     def to_entity(self) -> Timeline:
         return Timeline(
             id_match = self.id_match,
-            minute_started = self.minute_started,
+            minute_second_started = self.minute_second_started,
         )

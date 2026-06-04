@@ -12,9 +12,9 @@ class Timeline(Base):
 
     match = relationship("Match", back_populates="timeline")
 
-    minute_started = Column(Integer, nullable=False)
+    minute_second_started = Column(Integer, nullable=False)
 
-    minute_finished = Column(Integer)
+    minute_second_finished = Column(Integer)
 
     timeline_event = relationship(
         "TimelineEvent",

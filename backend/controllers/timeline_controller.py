@@ -13,8 +13,8 @@ def create_timeline(request: TimelineRequest, db: Session = Depends(get_db)):
     return service.create(timeline, db)
 
 @router.put("/timeline/stop/{id}")
-def stop_timeline(id: int, minute_finished: int, db: Session = Depends(get_db)):
-    return service.stop(id, minute_finished, db)
+def stop_timeline(id: int, minute_second_finished: int, db: Session = Depends(get_db)):
+    return service.stop(id, minute_second_finished, db)
 
 @router.get("/timeline/match/{id_match}")
 def get_by_match(id_match: int, db: Session = Depends(get_db)):

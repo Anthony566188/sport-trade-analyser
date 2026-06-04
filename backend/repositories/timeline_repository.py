@@ -21,7 +21,7 @@ def create(timeline: Timeline, db: Session):
 
     timeline = Timeline(
         id_match=timeline.id_match,
-        minute_started=timeline.minute_started
+        minute_second_started=timeline.minute_second_started
     )
 
     db.add(timeline)
@@ -30,7 +30,7 @@ def create(timeline: Timeline, db: Session):
 
     return timeline
 
-def stop(id: int, minute_finished: int, db: Session):
+def stop(id: int, minute_second_finished: int, db: Session):
     timeline = db.query(Timeline).filter(Timeline.id == id)\
         .first()
 
@@ -40,7 +40,7 @@ def stop(id: int, minute_finished: int, db: Session):
             detail="Id not found."
         )
 
-    timeline.minute_finished = minute_finished
+    timeline.minute_second_finished = minute_second_finished
 
     db.commit()
     db.refresh(timeline)

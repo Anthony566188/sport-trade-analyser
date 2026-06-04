@@ -1,4 +1,3 @@
-colocar campos 'home_goal' e 'away_goal' em 'math'?
 deve ter 'second' em timeline?
 Devo criar um campo 'team' em 'bet'?
 a ORDEM QUE OS ELEMENTOS DE UM OBJETO SÃO RETORNADOS IMPORTA?
