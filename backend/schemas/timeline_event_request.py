@@ -10,9 +10,8 @@ class TimelineEventRequest(BaseModel):
     id_timeline: int
     id_bet: Optional[int]
     event: Optional[EventType]
-    minute: int
-    second: int
-    additional_minute: Optional[int]
+    minute_second: int
+    additional_minute_second: Optional[int]
     description: Optional[str] = None
     team: str
 
@@ -25,9 +24,8 @@ class TimelineEventRequest(BaseModel):
             id_timeline = self.id_timeline,
             id_bet = self.id_bet,
             event = self.event.value if self.event else None,
-            minute = self.minute,
-            second = self.second,
-            additional_minute = self.additional_minute,
+            minute_second = self.minute_second,
+            additional_minute_second = self.additional_minute_second,
             description = self.description,
             team=self.team.upper().strip()
         )

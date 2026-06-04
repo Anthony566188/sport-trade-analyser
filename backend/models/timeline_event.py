@@ -20,13 +20,11 @@ class TimelineEvent(Base):
 
     bet = relationship("Bet", back_populates="timeline_event")
 
-    event = Column(String, nullable=True, unique=True)
+    event = Column(String, nullable=True)
 
-    minute = Column(Integer, nullable=False)
+    minute_second = Column(Integer, nullable=False, unique=True)
 
-    second = Column(Integer, nullable=False)
-
-    additional_minute = Column(Integer, nullable=True)
+    additional_minute_second = Column(Integer, nullable=True)
 
     description = Column(String, nullable=True)
 
