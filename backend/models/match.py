@@ -24,6 +24,31 @@ class Match(Base):
 
     is_friendly = Column(Integer, nullable=False)
 
+    def has_championship(self) -> bool:
+        if self.championship is None:
+            return False
+        return str(self.championship).strip() != ""
+
+    def is_friendly_match(self) -> bool:
+        return bool(self.is_friendly)
+
+    def validate(self) -> None:
+        self.validate_friendly_championship()
+
+    def validate_friendly_championship(self) -> None:
+        has_championship = self.has_championship()
+        is_friendly = self.is_friendly_match()
+
+        if is_friendly and has_championship:
+            raise ValueError(
+                "Partida amistosa não pode ter campeonato."
+            )
+
+        if not is_friendly and not has_championship:
+            raise ValueError(
+                "Partida não amistosa deve informar o campeonato."
+            )
+
     timeline = relationship(
         "Timeline",
         back_populates="match",

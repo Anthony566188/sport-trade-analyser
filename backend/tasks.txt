@@ -1,10 +1,7 @@
-deve ter 'second' em timeline?
-Devo criar um campo 'team' em 'bet'?
-a ORDEM QUE OS ELEMENTOS DE UM OBJETO SÃO RETORNADOS IMPORTA?
-
-IMPLEMENTAR AMISTOSO (se for amistoso, campeonato tem q ser nulo)
 regra de negócio para aceitar: ou criterio, ou evento, ou bet na timeline_event
 validação para aceitar 'additional_minute' apenas se o 'minute' for 45
 O minuto do evento não pode ser menor que a data de inicio
 Não pode haver mais de um timeline com 'minute_finished' null
 validação para time passado no 'timeline_event' estar contido em 'match'
+O front deve ter uma lista de campeonatos e times
+Devo criar endpoint de pesquisa de time?

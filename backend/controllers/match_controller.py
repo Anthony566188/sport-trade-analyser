@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -11,7 +11,10 @@ router = APIRouter()
 @router.post("/matches")
 def create(request: MatchRequest, db: Session = Depends(get_db)):
     match = request.to_entity()
-    return service.register_match(db, match)
+    try:
+        return service.register_match(db, match)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/matches/date/{date}")
 def get_matches_by_date(date: date, db: Session = Depends(get_db)):
@@ -24,7 +27,10 @@ def get_by_id(id: int, db: Session = Depends(get_db)):
 @router.put("/matches/{id}")
 def update_match(id: int, request: MatchRequest, db: Session = Depends(get_db)):
     match = request.to_entity()
-    return service.update_match(id, match, db)
+    try:
+        return service.update_match(id, match, db)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/matches/{id}")
 def delete_match(id: int, db: Session = Depends(get_db)):

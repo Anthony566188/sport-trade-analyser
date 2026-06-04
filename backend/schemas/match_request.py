@@ -20,12 +20,16 @@ class MatchRequest(BaseModel):
         from_attributes = True # Permite a integração com o SQLAlchemy
 
     def to_entity(self) -> Match:
+        championship = self.championship.upper().strip() if self.championship else None
+        if championship == "":
+            championship = None
+
         return Match(
             team_home=self.team_home.upper().strip(),
             team_away=self.team_away.upper().strip(),
             home_goals=self.home_goals,
             away_goals=self.away_goals,
-            championship=self.championship.upper().strip() if self.championship else None,
+            championship=championship,
             date=self.date,
             is_neutral_field=self.is_neutral_field,
             is_friendly=self.is_friendly,
