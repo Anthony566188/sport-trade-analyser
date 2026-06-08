@@ -10,8 +10,11 @@ def stop(id, minute_second_finished, db):
 
     # Valida se o término é menor que algum evento existente
     if events:
-        # Pega o maior valor de minute_second entre todos os eventos desta timeline
-        max_event_time = max(e.minute_second for e in events)
+        # Pega o maior valor de (minute_second + additional_minute_second)
+        max_event_time = max(
+            e.minute_second + (e.additional_minute_second or 0)
+            for e in events
+        )
 
         if minute_second_finished < max_event_time:
             raise ValueError(

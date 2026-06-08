@@ -22,16 +22,22 @@ def timeline_register(timeline_event_data: TimelineEvent, db):
     # Verifica se a 'timeline' existe
     timeline = timeline_repository.get_by_id(timeline_event_data.id_timeline, db)
 
-    # O tempo do evento não pode ser antes do início da timeline
-    additional_minute = 0
-    if timeline_event_data.additional_minute_second != None:
-        additional_minute = timeline_event_data.additional_minute_second
-    minute_event = timeline_event_data.minute_second + additional_minute
-    if minute_event < timeline.minute_second_started:
+    # Calcula o tempo total do evento (regular + acréscimo)
+    event_time = timeline_event_data.minute_second + (timeline_event_data.additional_minute_second or 0)
+    # O tempo do evento não pode ser antes do início
+    if event_time < timeline.minute_second_started:
         raise ValueError(
-            f"Tempo inválido: O evento ({minute_event}s) não pode "
+            f"Tempo inválido: O evento ({event_time}s) não pode "
             f"acontecer antes da timeline começar ({timeline.minute_second_started}s)."
         )
+
+    # O evento não pode acontecer depois do encerramento da timeline
+    if timeline.minute_second_finished is not None:
+        if event_time >= timeline.minute_second_finished:
+            raise ValueError(
+                f"Tempo inválido: A timeline já foi encerrada aos {timeline.minute_second_finished}s. "
+                f"Não é possível cadastrar um evento ocorrido aos {event_time}s."
+            )
 
     # Se for gol, atualiza a tabela 'MATHES'
     if timeline_event_data.event == "GOAL":
@@ -83,16 +89,23 @@ def update_timeline_event(id, update_timeline_event: TimelineEvent, db):
     # Busca a timeline atrelada a este evento
     timeline = timeline_repository.get_by_id(timeline_event.id_timeline, db)
 
-    # O tempo do evento não pode ser antes do início da timeline
-    additional_minute = 0
-    if update_timeline_event.additional_minute_second != None:
-        additional_minute = update_timeline_event.additional_minute_second
-    minute_event = update_timeline_event.minute_second + additional_minute
-    if minute_event < timeline.minute_second_started:
+    # Calcula o novo tempo total do evento
+    event_time = update_timeline_event.minute_second + (update_timeline_event.additional_minute_second or 0)
+
+    # Valida se não é menor que o início
+    if event_time < timeline.minute_second_started:
         raise ValueError(
-            f"Tempo inválido: O evento ({minute_event}s) não pode "
-            f"acontecer antes da timeline começar ({timeline.minute_second_started}s)."
+            f"Tempo inválido: O evento atualizado ({event_time}s) "
+            f"não pode acontecer antes da timeline começar ({timeline.minute_second_started}s)."
         )
+
+    # Valida se não é maior ou igual ao término (caso a timeline já esteja fechada)
+    if timeline.minute_second_finished is not None:
+        if event_time >= timeline.minute_second_finished:
+            raise ValueError(
+                f"Tempo inválido: A timeline associada já foi encerrada aos {timeline.minute_second_finished}s. "
+                f"O evento atualizado ({event_time}s) deve ocorrer antes do encerramento."
+            )
 
     # Se for passado um critério, verifica se ele existe
     if update_timeline_event.id_criterion != None:

@@ -1,9 +1,9 @@
+remover comentarios 'timeline_event_service'
+
 validação para aceitar 'additional_minute' apenas se o 'minute' for 45
 O minuto do evento não pode ser menor que a data de inicio
 
 validação para time passado no 'timeline_event' estar contido em 'match'
-
-adicionar unique composta em time?
 
 Não pode haver mais de um timeline com 'minute_finished' null
 O front deve ter uma lista de campeonatos e times
