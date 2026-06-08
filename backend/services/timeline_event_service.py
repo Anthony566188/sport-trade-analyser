@@ -22,6 +22,17 @@ def timeline_register(timeline_event_data: TimelineEvent, db):
     # Verifica se a 'timeline' existe
     timeline = timeline_repository.get_by_id(timeline_event_data.id_timeline, db)
 
+    # BUSCA A PARTIDA (Match) atrelada a esta timeline
+    match: Match = match_repository.get_by_id(timeline.id_match, db)
+
+    # O time passado deve pertencer à partida
+    team = timeline_event_data.team
+    if team != match.team_home and team != match.team_away:
+        raise ValueError(
+            f"Time inválido: '{team}'. O evento só pode ser atribuído a um dos times "
+            f"desta partida ({match.team_home} x {match.team_away})."
+        )
+
     # Calcula o tempo total do evento (regular + acréscimo)
     event_time = timeline_event_data.minute_second + (timeline_event_data.additional_minute_second or 0)
     # O tempo do evento não pode ser antes do início
@@ -41,17 +52,10 @@ def timeline_register(timeline_event_data: TimelineEvent, db):
 
     # Se for gol, atualiza a tabela 'MATHES'
     if timeline_event_data.event == "GOAL":
-        # Time do evento
-        team = timeline_event_data.team
-
-        # busca a 'partida'
-        match: Match = match_repository.get_by_id(timeline.id_match, db)
-
         if match.team_home == team:
             match.home_goals += 1
         else:
             match.away_goals += 1
-
         match_repository.update(match, db)
 
     # Regra de negócio: Exatamente UM campo (entre: id_criterion, id_bet e event) deve estar preenchido
@@ -88,6 +92,19 @@ def update_timeline_event(id, update_timeline_event: TimelineEvent, db):
 
     # Busca a timeline atrelada a este evento
     timeline = timeline_repository.get_by_id(timeline_event.id_timeline, db)
+
+    # Busca a partida associada
+    match: Match = match_repository.get_by_id(timeline.id_match, db)
+
+    # Valida o novo time passado na atualização
+    new_team = update_timeline_event.team
+
+    # Verifica se o time passado é um dos times que estão se enfrentando
+    if new_team != match.team_home and new_team != match.team_away:
+        raise ValueError(
+            f"Time inválido: '{new_team}'. O evento atualizado só pode pertencer "
+            f"a um dos times da partida ({match.team_home} x {match.team_away})."
+        )
 
     # Calcula o novo tempo total do evento
     event_time = update_timeline_event.minute_second + (update_timeline_event.additional_minute_second or 0)
