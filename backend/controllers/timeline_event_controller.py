@@ -11,16 +11,16 @@ router = APIRouter()
 
 @router.post("/timeline-event")
 def register(request: TimelineEventRequest, db: Session = Depends(get_db)):
-    timeline = request.to_entity()
     try:
+        timeline = request.to_entity()
         return service.timeline_register(timeline, db)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/timeline-event/{id}")
 def update_timeline_event(id: int, update: UpdateTimelineEvent, db: Session = Depends(get_db)):
-    update_timeline_event = update.to_entity()
     try:
+        update_timeline_event = update.to_entity()
         return service.update_timeline_event(id, update_timeline_event, db)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

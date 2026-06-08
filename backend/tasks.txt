@@ -1,9 +1,11 @@
-testar endpoint de buscar timeline-event
-regra de negócio para aceitar: ou criterio, ou evento, ou bet na timeline_event
 validação para aceitar 'additional_minute' apenas se o 'minute' for 45
 O minuto do evento não pode ser menor que a data de inicio
-Não pode haver mais de um timeline com 'minute_finished' null
+
 validação para time passado no 'timeline_event' estar contido em 'match'
+
+adicionar unique composta em time?
+
+Não pode haver mais de um timeline com 'minute_finished' null
 O front deve ter uma lista de campeonatos e times
 Devo criar endpoint de pesquisa de time?
 No momento em que a bet é criada, deve estar associada à um timeline-event

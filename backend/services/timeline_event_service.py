@@ -10,6 +10,7 @@ from models.timeline_event import TimelineEvent
 
 
 def timeline_register(timeline_event_data: TimelineEvent, db):
+
     # Se for passado um 'criterio', verifica se ele existe
     if timeline_event_data.id_criterion != None:
         criterion_repository.get_by_id(timeline_event_data.id_criterion, db)
@@ -19,15 +20,25 @@ def timeline_register(timeline_event_data: TimelineEvent, db):
         bet_repository.get_by_id(timeline_event_data.id_bet, db)
 
     # Verifica se a 'timeline' existe
-    timeline_repository.get_by_id(timeline_event_data.id_timeline, db)
+    timeline = timeline_repository.get_by_id(timeline_event_data.id_timeline, db)
+
+    # O tempo do evento não pode ser antes do início da timeline
+    additional_minute = 0
+    if timeline_event_data.additional_minute_second != None:
+        additional_minute = timeline_event_data.additional_minute_second
+    minute_event = timeline_event_data.minute_second + additional_minute
+    if minute_event < timeline.minute_second_started:
+        raise ValueError(
+            f"Tempo inválido: O evento ({minute_event}s) não pode "
+            f"acontecer antes da timeline começar ({timeline.minute_second_started}s)."
+        )
 
     # Se for gol, atualiza a tabela 'MATHES'
     if timeline_event_data.event == "GOAL":
         # Time do evento
         team = timeline_event_data.team
 
-        # Busca a timeline para 'depois' buscar a 'partida'
-        timeline = timeline_repository.get_by_id(timeline_event_data.id_timeline, db)
+        # busca a 'partida'
         match: Match = match_repository.get_by_id(timeline.id_match, db)
 
         if match.team_home == team:
@@ -69,9 +80,23 @@ def update_timeline_event(id, update_timeline_event: TimelineEvent, db):
     # Busca o timeline_event
     timeline_event: TimelineEvent = repository.get_by_id(id, db)
 
+    # Busca a timeline atrelada a este evento
+    timeline = timeline_repository.get_by_id(timeline_event.id_timeline, db)
+
+    # O tempo do evento não pode ser antes do início da timeline
+    additional_minute = 0
+    if update_timeline_event.additional_minute_second != None:
+        additional_minute = update_timeline_event.additional_minute_second
+    minute_event = update_timeline_event.minute_second + additional_minute
+    if minute_event < timeline.minute_second_started:
+        raise ValueError(
+            f"Tempo inválido: O evento ({minute_event}s) não pode "
+            f"acontecer antes da timeline começar ({timeline.minute_second_started}s)."
+        )
+
     # Se for passado um critério, verifica se ele existe
     if update_timeline_event.id_criterion != None:
-        criterion_existis: Criterion = criterion_repository.get_by_id(update_timeline_event.id_criterion, db)
+        criterion_repository.get_by_id(update_timeline_event.id_criterion, db)
 
     # Regra de negócio: Exatamente UM campo deve estar preenchido
     campos_preenchidos = sum([
@@ -101,5 +126,5 @@ def delete_event(id, db):
     return repository.delete_event(timeline_event, db)
 
 def get_by_timeline(id_timeline, db):
-    timeline_exists = timeline_repository.get_by_id(id_timeline, db)
+    timeline_repository.get_by_id(id_timeline, db)
     return repository.get_by_timeline(id_timeline, db)

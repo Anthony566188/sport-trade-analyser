@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 
@@ -14,7 +14,10 @@ def create_timeline(request: TimelineRequest, db: Session = Depends(get_db)):
 
 @router.put("/timeline/stop/{id}")
 def stop_timeline(id: int, minute_second_finished: int, db: Session = Depends(get_db)):
-    return service.stop(id, minute_second_finished, db)
+    try:
+        return service.stop(id, minute_second_finished, db)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/timeline/match/{id_match}")
 def get_by_match(id_match: int, db: Session = Depends(get_db)):

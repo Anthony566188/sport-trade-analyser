@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint, Index
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -22,10 +22,27 @@ class TimelineEvent(Base):
 
     event = Column(String, nullable=True)
 
-    minute_second = Column(Integer, nullable=False, unique=True)
+    minute_second = Column(Integer, nullable=False)
 
     additional_minute_second = Column(Integer, nullable=True)
 
     description = Column(String, nullable=True)
 
     team = Column(String, nullable=False)
+
+    __table_args__ = (
+
+        UniqueConstraint(
+            "id_timeline",
+            "minute_second",
+            "additional_minute_second",
+            name="TIMELINE_EVENTS_MINUTE_SECOND_ADDITIONAL_MINUTE_SECOND_ID_TIMELINE_UN"
+        ),
+        Index(
+            "ux_timeline_minute_null",
+            "id_timeline",
+            "minute_second",
+            unique=True,
+            sqlite_where=(additional_minute_second.is_(None))
+        )
+    )

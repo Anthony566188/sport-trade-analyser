@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from models.enums.event_type import EventType
 from models.timeline_event import TimelineEvent
@@ -16,6 +16,19 @@ class UpdateTimelineEvent(BaseModel):
 
     class Config:
         from_attributes = True
+
+    @model_validator(mode='after')
+    def validate_time_rules(self) -> 'UpdateTimelineEvent':
+        # 'minute_second' não pode ser > 2700 e < 0
+        if self.minute_second < 0 or self.minute_second > 2700:
+            raise ValueError("'minute_second' deve estar entre 0 e 2700 (45 minutos).")
+
+        # Acréscimo só pode existir se o tempo for exatamente 2700
+        if self.additional_minute_second is not None and self.minute_second != 2700:
+            raise ValueError(
+                "Só é possível passar um valor de acréscimo se o tempo regular ('minute_second') for exatamente 2700.")
+
+        return self
 
     def to_entity(self) -> TimelineEvent:
         team = self.team.upper().strip() if self.team else None
