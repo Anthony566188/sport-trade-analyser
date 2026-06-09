@@ -24,9 +24,17 @@ class MatchRequest(BaseModel):
         if championship == "":
             championship = None
 
+        team_home = self.team_home.upper().strip() if self.team_home else None
+        if team_home == "":
+            team_home = None
+
+        team_away = self.team_away.upper().strip() if self.team_away else None
+        if team_away == "":
+            team_away = None
+
         return Match(
-            team_home=self.team_home.upper().strip(),
-            team_away=self.team_away.upper().strip(),
+            team_home=team_home,
+            team_away=team_away,
             home_goals=self.home_goals,
             away_goals=self.away_goals,
             championship=championship,

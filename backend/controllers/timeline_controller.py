@@ -9,8 +9,11 @@ router = APIRouter()
 
 @router.post("/timeline")
 def create_timeline(request: TimelineRequest, db: Session = Depends(get_db)):
-    timeline = request.to_entity()
-    return service.create(timeline, db)
+    try:
+        timeline = request.to_entity()
+        return service.create(timeline, db)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/timeline/stop/{id}")
 def stop_timeline(id: int, minute_second_finished: int, db: Session = Depends(get_db)):
@@ -21,4 +24,7 @@ def stop_timeline(id: int, minute_second_finished: int, db: Session = Depends(ge
 
 @router.get("/timeline/match/{id_match}")
 def get_by_match(id_match: int, db: Session = Depends(get_db)):
-    return service.get_by_match(id_match, db)
+    try:
+        return service.get_by_match(id_match, db)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

@@ -1,7 +1,19 @@
 import repositories.timeline_repository as repository
 import repositories.timeline_event_repository as timeline_event_repository
+from models.timeline import Timeline
 
-def create(timeline, db):
+
+def create(timeline: Timeline, db):
+    # Verifica se tem null em MINUTE_SECOND_FINISHED
+    repository.has_null_in_minute_second_finished(db)
+
+    try:
+        repository.get_by_match(timeline.id_match, db)
+    except ValueError:
+        pass
+    else:
+        raise ValueError(f"A partida de de id {timeline.id_match} já está associada à uma timeline.")
+
     return repository.create(timeline, db)
 
 def stop(id, minute_second_finished, db):

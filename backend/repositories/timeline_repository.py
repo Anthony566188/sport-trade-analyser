@@ -65,6 +65,8 @@ def delete(id: int, db: Session):
 
 def get_by_match(id_match: int, db: Session) -> Timeline:
     timeline = db.query(Timeline).filter(Timeline.id_match == id_match).first()
+    if timeline is None:
+        raise ValueError(f"Não existe uma timeline com id_match = {id_match}")
     return timeline
 
 def get_by_id(id: int, db: Session) -> Timeline:
@@ -77,3 +79,13 @@ def get_by_id(id: int, db: Session) -> Timeline:
         )
 
     return timeline
+
+def has_null_in_minute_second_finished(db: Session):
+    record_with_null = (
+        db.query(Timeline)
+        .filter(Timeline.minute_second_finished.is_(None))
+        .first()
+    )
+
+    if record_with_null:
+        raise ValueError("Já existe um registro com MINUTE_SECOND_FINISHED = NULL, encerre-o primeiro!")
