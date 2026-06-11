@@ -1,3 +1,2 @@
-O front deve ter uma lista de campeonatos e times
-Devo criar endpoint de pesquisa de time?
+verificar .env
 No momento em que a bet é criada, deve estar associada à um timeline-event
