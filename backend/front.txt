@@ -1,0 +1,6 @@
+Frontend (React): Componente inteligente com:
+
+Input de busca
+Lista visual dos times
+Autocomplete que chama o backend a cada letra digitada
+Opção de ver todos os times (sem filtro)

@@ -1,2 +1,1 @@
-verificar .env
 No momento em que a bet é criada, deve estar associada à um timeline-event
