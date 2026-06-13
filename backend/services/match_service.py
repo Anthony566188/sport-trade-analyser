@@ -8,6 +8,11 @@ def register_match(db,match_data):
     if match_data.date == None:
         match_data.date = date.today()
 
+    if match_data.date < date.today():
+        raise ValueError(
+            "Não é possível passar uma data passada"
+        )
+
     match = Match(
         team_home=match_data.team_home,
         team_away=match_data.team_away,
