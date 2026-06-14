@@ -8,6 +8,7 @@ import api from '../services/api'
 import { Spinner } from '../components/ui/Spinner'
 import { cn } from '../utils/cn'
 import type { Match, Timeline, TimelineEvent, EventType, Criterion } from '../types'
+import { EVENT_TYPE_LABELS } from '../types'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -20,15 +21,16 @@ function secondsToDisplay(s: number): string {
 }
 
 const EVENT_ICONS: Record<EventType, string> = {
-  GOAL:         '⚽',
-  YELLOW_CARD:  '🟨',
-  RED_CARD:     '🟥',
-  CORNER:       '🚩',
-  SUBSTITUTION: '🔄',
-  PENALTY:      '🥅',
-  OFFSIDE:      '🚫',
-  FOUL:         '⚠️',
-  VAR:          '📺',
+  YELLOW_CARD: '🟨',
+  RED_CARD: '🟥',
+  GOAL: '⚽',
+  CORNER: '🚩',
+  FOUL_DEFENSIVE_HALF: '🛡️',   // Escudo para defesa
+  FOUL_ATTACKING_HALF: '⚔️',   // Espadas para ataque
+  ANNULLED_GOAL: '❌',         // X para anulado
+  HIT_WOODWORK: '🥅',          // Trave
+  GOALKEEPER_SAVE: '🧤',       // Luvas para defesa
+  PENALTY: '🎯',               // Alvo para pênalti
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -312,7 +314,7 @@ export const TimelinePage: React.FC = () => {
                         )}
                       >
                         <span className="text-base">{EVENT_ICONS[evt]}</span>
-                        {evt.replace('_', ' ')}
+                        {EVENT_TYPE_LABELS[evt]}
                       </button>
                     ))}
                   </div>
@@ -376,7 +378,7 @@ export const TimelinePage: React.FC = () => {
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-turf-900 dark:text-turf-100">
-                  {evt.event ?? (evt.id_criterion ? criteria.find(c=>c.id===evt.id_criterion)?.title ?? 'Critério' : 'Aposta')}
+                  {evt.event ? EVENT_TYPE_LABELS[evt.event] : (evt.id_criterion ? criteria.find(c=>c.id===evt.id_criterion)?.title ?? 'Critério' : 'Aposta')}
                 </p>
                 <p className="text-xs text-turf-400 dark:text-turf-500">{evt.team}</p>
               </div>

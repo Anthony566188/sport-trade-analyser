@@ -35,17 +35,33 @@ export interface Timeline {
   minute_second_finished: number | null;
 }
 
-/** Timeline Event entity */
-export type EventType =
-  | 'GOAL'
-  | 'YELLOW_CARD'
-  | 'RED_CARD'
-  | 'CORNER'
-  | 'SUBSTITUTION'
-  | 'PENALTY'
-  | 'OFFSIDE'
-  | 'FOUL'
-  | 'VAR';
+// Enum estrito refletindo o backend
+export enum EventType {
+  YELLOW_CARD = 'YELLOW_CARD',
+  RED_CARD = 'RED_CARD',
+  GOAL = 'GOAL',
+  CORNER = 'CORNER',
+  FOUL_DEFENSIVE_HALF = 'FOUL_DEFENSIVE_HALF',
+  FOUL_ATTACKING_HALF = 'FOUL_ATTACKING_HALF',
+  ANNULLED_GOAL = 'ANNULLED_GOAL',
+  HIT_WOODWORK = 'HIT_WOODWORK',
+  GOALKEEPER_SAVE = 'GOALKEEPER_SAVE',
+  PENALTY = 'PENALTY',
+}
+
+// Um record de mapeamento para a UI (Select, Tabelas, Timelines)
+export const EVENT_TYPE_LABELS: Record<EventType, string> = {
+  [EventType.YELLOW_CARD]: 'Cartão Amarelo',
+  [EventType.RED_CARD]: 'Cartão Vermelho',
+  [EventType.GOAL]: 'Gol',
+  [EventType.CORNER]: 'Escanteio',
+  [EventType.FOUL_DEFENSIVE_HALF]: 'Falta (Campo de Defesa)',
+  [EventType.FOUL_ATTACKING_HALF]: 'Falta (Campo de Ataque)',
+  [EventType.ANNULLED_GOAL]: 'Gol Anulado',
+  [EventType.HIT_WOODWORK]: 'Bola na Trave',
+  [EventType.GOALKEEPER_SAVE]: 'Defesa do Goleiro',
+  [EventType.PENALTY]: 'Pênalti',
+};
 
 export interface TimelineEvent {
   id: number;
