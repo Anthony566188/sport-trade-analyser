@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root { color-scheme: light; }
+  .dark { color-scheme: dark; }
+
+  body {
+    @apply bg-turf-50 text-turf-900 font-display antialiased transition-colors duration-200;
+  }
+
+  * { @apply border-turf-200 dark:border-turf-700; }
+
+  ::-webkit-scrollbar       { @apply w-1.5; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-turf-300 dark:bg-turf-600 rounded-full; }
+}
+
+@layer components {
+  .pitch-divider {
+    @apply border-t-2 border-dashed border-pitch-200 dark:border-pitch-800 my-6;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium;
+  }
+  .input-base {
+    @apply w-full rounded-lg border bg-white dark:bg-turf-800
+           border-turf-300 dark:border-turf-600
+           text-turf-900 dark:text-turf-100
+           placeholder:text-turf-400 dark:placeholder:text-turf-500
+           focus:outline-none focus:ring-2 focus:ring-pitch-500 focus:border-transparent
+           transition-all duration-150;
+  }
+}
+
+/* ─── Timeline button controls ───────────────────────────────────────────── */
+@layer components {
+  .btn-ctrl {
+    @apply px-3 py-1.5 rounded-lg text-xs font-medium border
+           border-turf-200 dark:border-turf-700
+           text-turf-600 dark:text-turf-300
+           hover:bg-turf-100 dark:hover:bg-turf-700
+           transition-colors;
+  }
+  .field-label {
+    @apply block text-xs font-medium text-turf-500 dark:text-turf-400 mb-1.5 uppercase tracking-wide;
+  }
+  .field-select {
+    @apply w-full rounded-lg border px-3 py-2 text-sm
+           bg-white dark:bg-turf-800
+           border-turf-200 dark:border-turf-700
+           text-turf-900 dark:text-turf-100
+           focus:outline-none focus:ring-2 focus:ring-pitch-500 focus:border-transparent;
+  }
+}

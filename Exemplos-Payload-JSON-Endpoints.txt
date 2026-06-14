@@ -1,0 +1,136 @@
+Sumário:
+Match (/matches)
+Timeline (/timeline)
+Timeline Event (/timeline-event)
+Method (/method)
+Criterion (/criterion)
+Bet (/bet)
+
+1. Match (/matches)
+Resumo de Campos e Regras:
+team_home, team_away (str, obrigatórios): Nomes dos times (serão convertidos para maiúsculo).
+home_goals, away_goals (int, default=0): Gols iniciais.
+championship (str, opcional): Nome do campeonato.
+date (date, opcional): Data no formato YYYY-MM-DD. Se vazio, assume date.today().
+is_neutral_field, is_friendly (bool, default=false): Flags indicativas.
+Regra Chave 1: Se is_friendly = true, championship DEVE ser null ou vazio.
+Regra Chave 2: Se is_friendly = false, championship NÃO PODE ser null ou vazio.
+
+1.1 POST /matches & PUT /matches/{id}
+Cria ou atualiza uma partida.
+Exemplo 1: Sucesso Básico (Não Amistosa)
+Descrição: Partida oficial comum (exige championship). Validade: Válido.
+Payload:
+JSON
+{
+  "team_home": "Brasil",
+  "team_away": "Argentina",
+  "championship": "Copa do Mundo",
+  "is_friendly": false
+}
+
+Exemplo 2: Violação de Regra (Amistoso com Campeonato)
+Descrição: Tentar criar um amistoso mas enviar um campeonato associado. Validade: Inválido.
+Justificativa: Regra no modelo Match.validate_friendly_championship() proíbe amistoso com campeonato.
+Status: 400 Bad Request
+Resposta: {"detail": "Partida amistosa não pode ter campeonato."}
+
+Exemplo 3: Violação de Regra (Oficial sem Campeonato)
+Descrição: Partida não amistosa mas campo championship omitido. Validade: Inválido.
+Justificativa: Regra de negócio exige identificação da competição para jogos oficiais.
+Status: 400 Bad Request
+Resposta: {"detail": "Partida não amistosa deve informar o campeonato."}
+
+2. Timeline (/timeline)
+Resumo de Campos e Regras:
+id_match (int, obrigatório): ID da partida vinculada. Uma partida só pode ter UMA timeline.
+minute_second_started (int, obrigatório): Em quais segundos a timeline começou a gravar.
+Regra Chave: Não é possível criar uma timeline se já existir no banco alguma timeline "aberta" (minute_second_finished == null). É preciso encerrar a anterior primeiro.
+
+2.1 POST /timeline
+Exemplo 1: Sucesso Básico
+Payload: {"id_match": 1, "minute_second_started": 0}
+
+Exemplo 2: Violação de Regra Limite (Duas timelines abertas)
+Descrição: Criar nova timeline enquanto existe outra ativa no sistema. Validade: Inválido.
+Justificativa: O método has_null_in_minute_second_finished bloqueia a criação para prevenir sobreposição de análises ativas.
+Resposta: {"detail": "Já existe um registro com MINUTE_SECOND_FINISHED = NULL, encerre-o primeiro!"}
+
+2.2 PUT /timeline/stop/{id}
+Exemplo 1: Sucesso
+Query Param: minute_second_finished=2700
+Descrição: Encerra a timeline. O tempo de encerramento NÃO PODE ser menor que o último evento registrado nela.
+
+3. Timeline Event (/timeline-event)
+Resumo de Campos e Regras:
+id_timeline (int, obrigatório): ID da timeline.
+id_criterion, id_bet, event (opcionais): Regra: OBRIGATORIAMENTE APENAS UM destes 3 campos deve ser enviado.
+minute_second (int): Segundos. Regra: Deve estar entre 0 e 2700 (45 min).
+additional_minute_second (int): Acréscimo. Regra: Só pode ser enviado se minute_second for exatamente 2700.
+team (str, obrigatório): Time. Regra: Tem que bater com o nome do time Home ou Away da Partida atrelada.
+
+3.1 POST /timeline-event & PUT /timeline-event/{id}
+Exemplo 1: Sucesso Total (Gol com Acréscimo)
+Descrição: Registra um gol aos 45+2 min do primeiro tempo. Validade: Válido.
+Payload:
+JSON
+{
+  "id_timeline": 1,
+  "event": "GOAL",
+  "minute_second": 2700,
+  "additional_minute_second": 120,
+  "team": "BRASIL"
+}
+
+Exemplo 2: Violação (Acréscimo antes dos 45)
+Descrição: Envio de acréscimo fora do minuto final. Validade: Inválido.
+Justificativa: O decorator @model_validator restringe acréscimo se a base não for 2700.
+Resposta: {"detail": "Só é possível passar um valor de acréscimo se o tempo regular ('minute_second') for exatamente 2700."}
+
+Exemplo 3: Violação de Regra de Negócio (Campos Múltiplos)
+Descrição: Associa uma aposta E um critério simultaneamente. Validade: Inválido.
+Justificativa: Um evento só pode representar ou uma anotação estática (event), ou um critério (id_criterion) ou uma aposta (id_bet).
+Resposta: {"detail": "É obrigatório associar exatamente UM dos campos (id_criterion, id_bet ou event). Não é permitido enviar mais de um, nem nenhum."}
+
+4. Method (/method) e 5. Criterion (/criterion)
+Resumo: Métodos de trading e Critérios de entrada (cadastros simples).
+Method exige apenas name (str único).
+Criterion exige title (str único) e description (str opcional).
+Exemplos (Sucesso Básicos):
+POST /method -> {"name": "Back Favorito HT"}
+POST /criterion -> {"title": "Pressão Alta", "description": "Time da casa pressionando na defesa adversária"}
+
+6. Bet (/bet)
+Resumo de Campos e Regras:
+id_method (int, obrigatório).
+stake, entry_odd (decimal, obrigatório).
+type (str): Enum "BACK" ou "LAY".
+exit_odd (decimal, opcional no PUT).
+
+6.1 POST /bet
+Exemplo 1: Sucesso Básico
+Payload:
+JSON
+{
+  "id_method": 1,
+  "stake": 10.50,
+  "entry_odd": 1.85,
+  "type": "BACK"
+}
+
+6.2 PUT /bet/{id} (Atualização)
+Exemplo 1: Violação de Estado (Forçar encerramento pela rota genérica)
+Descrição: Tenta preencher a exit_odd de uma aposta aberta na rota de update genérico. Validade: Inválido.
+Resposta: {"detail": "'exit_odd' não pode ser alterado!"}
+
+6.3 PUT /bet/{id}/exit/{exit_odd}
+Rota: PUT /bet/1/exit/1.45
+Descrição: Forma correta de encerrar a aposta (calcula lucro profit_in_money automaticamente no controller).
+
+7. Integrações e Consultas Auxiliares (GET)
+Estes endpoints não possuem payload (body), usam apenas Query Params ou não têm parâmetros:
+GET /championships/{id}/teams/search?query=barcelona: Lê um JSON local championships.json e filtra nomes.
+GET /event-type: Retorna array com todos enums possíveis (ex: "YELLOW_CARD", "GOAL", "CORNER", etc).
+
+Arquivo JSON Mestre de Exemplos
+O JSON abaixo consolida exemplos técnicos "prontos para consumo" ou importação em ferramentas como Postman/Insomnia, respeitando estritamente a análise do código.

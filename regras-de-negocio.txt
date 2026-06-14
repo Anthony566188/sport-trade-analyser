@@ -1,0 +1,49 @@
+1. O usuário deve ser capaz de criar/cadastrar critérios de análise.
+
+2. O usuário deve ser capaz de visualizar todos os critérios criados.
+
+3. O usuário deve ser capaz de atualizar um critério.
+
+4. O usuário deve ser capaz de deletar um critério.
+
+5. O usuário deve ser capaz de criar/registrar uma partida. Se o jogo for em campo neutro, não há problema em qual time foi registrado em 'home_team' ou 'away_team'.
+a. Por padrão o placar da partida deve ser preenchido com 0 a 0, sendo 'home_goals' do primeiro time e 'away_goals' do segundo time selecionado (caso a partida seja em campo neutro), mas o usuário deve ser capaz de mudar o placar inicial.
+b. A partida deve ser: ou de um campeonato ou um amistoso, não pode ser os dois ou nenhum.
+c. A data da partida por padrão deve ser a data do dia atual, mas o usuário deve ser capaz de alterá-la (a data passada deve ser maior ou igual ao dia atual).*
+d. O usuário deve ser capaz de visualizar todos os campeonatos disponíveis para poder selecionar.
+e. O usuário deve ser capaz de visualizar todos os times daquele campeonato ou pesquisar um específico para poder selecionar.
+f. Se for um amistoso, o usuário deve ser capaz de ver todos os times ou pesquisar um espcífico para selecionar.
+
+6. O usuário deve ser capaz de visualizar todas as partidas criadas/cadastradas filtrando por data (por padrão, a data do dia atual).
+
+7. O usuário deve ser capaz atualizar uma partida.*
+
+8. O usuário deve ser capaz de deletar uma partida.
+
+9. Ao criar/cadastrar uma partida, o usuário deve ser capaz de criar/cadastrar uma 'timeline' associada à esta partida passando o tempo inicial em segundos. Ex: A partida já começou à 2 minutos e 15 segudos, o usuário deverá enviar esse tempo em minutos e segundos e front deverá transformar em segundos para enviar para o backend. OBS: O usuário não deverá sofrer dificuldades para sincronizar o tempo da 'timeline' com o tempo real do jogo.
+a. O usuário dever ser capaz de alterar o tempo da 'timeline' mesmo depois de ter iniciado (avançar, voltar, pausar), o tempo inicial permanecerá o mesmo.
+
+10. O usuário deve ser capaz de encerrar o cronômetro da 'timeline'.
+
+11. O usuário dever ser capaz de visualizar os detalhes da 'timeline' de qualquer partida que tenha uma 'timeline' associada.
+
+12. O usuário deve ser capaz de registrar eventos/critérios/apostas ao decorrer desta 'timeline'. IMPORTANTE: O usuário não pode sofrer dificuldades ao registrar, pois ele vai precisar de agilidade.
+
+13. O usuário deve ser capaz de atualizar um evento (ex: mudar de 'evento' para um 'critério').
+
+14. O usuário deve ser capaz de remover um evento da 'timeline'.
+
+15. O usuário deve ser capaz de criar métodos de aposta.
+
+16. O usuário deve ser capaz de visualizar todos os seus métodos.
+
+17. O usuário deve ser capaz de atuzalizar os seus métodos.
+
+18. O usuário deve ser capaz de deletar os seus métodos.
+
+19. O usuário deve ser capaz de criar uma bet no momento de registrar na 'timeline'.
+
+20. O usuário deve ser capaz de atualizar um bet registrada na 'timeline'.
+
+
+
