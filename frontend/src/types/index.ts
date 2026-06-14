@@ -63,6 +63,18 @@ export const EVENT_TYPE_LABELS: Record<EventType, string> = {
   [EventType.PENALTY]: 'Pênalti',
 };
 
+// Reflete a classe TimelineEventRequest do Python
+export interface TimelineEventRequestPayload {
+  id_criterion?: number | null;
+  id_timeline: number;
+  id_bet?: number | null;
+  event?: EventType | null; 
+  minute_second: number;
+  additional_minute_second?: number | null;
+  description?: string | null;
+  team: string;
+}
+
 export interface TimelineEvent {
   id: number;
   id_timeline: number;
@@ -89,6 +101,14 @@ export interface Method {
 
 /** Bet entity */
 export type BetType = 'BACK' | 'LAY';
+
+// Reflete a classe BetRequest do Python
+export interface BetRequestPayload {
+  id_method: number;
+  stake: number;      // Mapeia o Decimal do Python
+  entry_odd: number;  // Mapeia o Decimal do Python
+  type: BetType;
+}
 
 export interface Bet {
   id: number;
