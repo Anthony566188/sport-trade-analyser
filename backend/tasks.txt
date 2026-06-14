@@ -1,3 +1,5 @@
+- não consigo criar aposta
+- Não consigo visuzalizar todos os times
 - a timeline não necessariamente precisa ser criada imediatamente após a criação da partida.
 - se o usuário atualizar uma partida, interfere na timeline?
 - Limite de 2700 segundos: A API supõe que o usuário criará uma nova timeline para o 2º tempo (já que o tempo é travado em 45 min de limite). Eventos de segundo tempo (ex: 60 minutos / 3600s) lançam erro 400. O payload a seguir segue essa restrição de código.

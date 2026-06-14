@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -14,6 +14,14 @@ def create_method(method: MethodRequest, db: Session = Depends(get_db)):
 @router.get("/method")
 def get_all(db: Session = Depends(get_db)):
     return service.get_all(db)
+
+@router.get("/method/{id}")
+def get_by_id(id: int, db: Session = Depends(get_db)):
+    try:
+        return service.get_by_id(id, db)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.put("/method/{id}")
 def update_method(id: int, method: MethodRequest, db: Session = Depends(get_db)):
