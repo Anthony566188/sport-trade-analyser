@@ -49,18 +49,18 @@ export enum EventType {
   PENALTY = 'PENALTY',
 }
 
-// Um record de mapeamento para a UI (Select, Tabelas, Timelines)
+// Record de mapeamento para a UI
 export const EVENT_TYPE_LABELS: Record<EventType, string> = {
-  [EventType.YELLOW_CARD]: 'Cartão Amarelo',
-  [EventType.RED_CARD]: 'Cartão Vermelho',
-  [EventType.GOAL]: 'Gol',
-  [EventType.CORNER]: 'Escanteio',
+  [EventType.YELLOW_CARD]:        'Cartão Amarelo',
+  [EventType.RED_CARD]:           'Cartão Vermelho',
+  [EventType.GOAL]:               'Gol',
+  [EventType.CORNER]:             'Escanteio',
   [EventType.FOUL_DEFENSIVE_HALF]: 'Falta (Campo de Defesa)',
   [EventType.FOUL_ATTACKING_HALF]: 'Falta (Campo de Ataque)',
-  [EventType.ANNULLED_GOAL]: 'Gol Anulado',
-  [EventType.HIT_WOODWORK]: 'Bola na Trave',
-  [EventType.GOALKEEPER_SAVE]: 'Defesa do Goleiro',
-  [EventType.PENALTY]: 'Pênalti',
+  [EventType.ANNULLED_GOAL]:      'Gol Anulado',
+  [EventType.HIT_WOODWORK]:       'Bola na Trave',
+  [EventType.GOALKEEPER_SAVE]:    'Defesa do Goleiro',
+  [EventType.PENALTY]:            'Pênalti',
 };
 
 // Reflete a classe TimelineEventRequest do Python
@@ -68,7 +68,7 @@ export interface TimelineEventRequestPayload {
   id_criterion?: number | null;
   id_timeline: number;
   id_bet?: number | null;
-  event?: EventType | null; 
+  event?: EventType | null;
   minute_second: number;
   additional_minute_second?: number | null;
   description?: string | null;
@@ -99,14 +99,14 @@ export interface Method {
   name: string;
 }
 
-/** Bet entity */
+/** Bet entity — espelha o retorno do backend */
 export type BetType = 'BACK' | 'LAY';
 
 // Reflete a classe BetRequest do Python
 export interface BetRequestPayload {
   id_method: number;
-  stake: number;      // Mapeia o Decimal do Python
-  entry_odd: number;  // Mapeia o Decimal do Python
+  stake: number;
+  entry_odd: number;
   type: BetType;
 }
 
@@ -117,6 +117,7 @@ export interface Bet {
   entry_odd: number;
   exit_odd: number | null;
   type: BetType;
+  date: string;
   profit_in_money: number | null;
 }
 
