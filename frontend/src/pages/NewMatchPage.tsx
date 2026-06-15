@@ -13,8 +13,13 @@ import type { Team, Championship } from '../types'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10)
+function todayLocal() {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  
+  return `${year}-${month}-${day}`
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -29,7 +34,7 @@ export const NewMatchPage: React.FC = () => {
   const [awayTeam, setAwayTeam]                = useState<Team | null>(null)
   const [homeGoals, setHomeGoals]              = useState(0)
   const [awayGoals, setAwayGoals]              = useState(0)
-  const [date, setDate]                        = useState(todayISO())
+  const [date, setDate]                        = useState(todayLocal())
   const [championshipId, setChampionshipId]    = useState<number | ''>('')
   const [championships, setChampionships]      = useState<Championship[]>([])
   const [chapLoading, setChapLoading]          = useState(false)
@@ -239,7 +244,7 @@ export const NewMatchPage: React.FC = () => {
         <input
           type="date"
           value={date}
-          min={todayISO()}
+          min={todayLocal()}
           onChange={e => setDate(e.target.value)}
           className={cn(
             'w-full rounded-lg border-2 px-3 py-2.5 text-sm',

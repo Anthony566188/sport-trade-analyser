@@ -11,8 +11,13 @@ import type { Match } from '../types'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10)
+function todayLocal() {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  
+  return `${year}-${month}-${day}`
 }
 
 function formatDateBR(iso: string) {
@@ -23,7 +28,7 @@ function formatDateBR(iso: string) {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export const MatchesPage: React.FC = () => {
-  const [date, setDate]       = useState(todayISO())
+  const [date, setDate]       = useState(todayLocal())
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState<string | null>(null)
@@ -98,7 +103,7 @@ export const MatchesPage: React.FC = () => {
           )}
         />
         <span className="text-xs text-turf-400 dark:text-turf-500">
-          {date === todayISO() ? '— Hoje' : `— ${formatDateBR(date)}`}
+          {date === todayLocal() ? '— Hoje' : `— ${formatDateBR(date)}`}
         </span>
       </div>
 
