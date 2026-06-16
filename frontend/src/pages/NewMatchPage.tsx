@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Flag, Trophy, ChevronDown,
-  AlertCircle, CheckCircle2, ToggleLeft, ToggleRight,
+  AlertCircle, CheckCircle2, ToggleLeft, ToggleRight, Clock,
 } from 'lucide-react'
 import api from '../services/api'
 import { fetchChampionships } from '../services/teamService'
 import { TeamSearchInput } from '../components/team/TeamSearchInput'
 import { Spinner } from '../components/ui/Spinner'
+import { minSecToSeconds } from '../utils/time'
 import { cn } from '../utils/cn'
 import type { Team, Championship } from '../types'
 
@@ -15,10 +16,9 @@ import type { Team, Championship } from '../types'
 
 function todayLocal() {
   const today = new Date()
-  const year = today.getFullYear()
+  const year  = today.getFullYear()
   const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  
+  const day   = String(today.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
 
@@ -28,27 +28,28 @@ export const NewMatchPage: React.FC = () => {
   const navigate = useNavigate()
 
   // ── Form state ──
-  const [isFriendly, setIsFriendly]           = useState(false)
-  const [isNeutralField, setIsNeutralField]    = useState(false)
-  const [homeTeam, setHomeTeam]                = useState<Team | null>(null)
-  const [awayTeam, setAwayTeam]                = useState<Team | null>(null)
-  const [homeGoals, setHomeGoals]              = useState(0)
-  const [awayGoals, setAwayGoals]              = useState(0)
-  const [date, setDate]                        = useState(todayLocal())
-  const [championshipId, setChampionshipId]    = useState<number | ''>('')
-  const [championships, setChampionships]      = useState<Championship[]>([])
-  const [chapLoading, setChapLoading]          = useState(false)
+  const [isFriendly,      setIsFriendly]      = useState(false)
+  const [isNeutralField,  setIsNeutralField]   = useState(false)
+  const [homeTeam,        setHomeTeam]         = useState<Team | null>(null)
+  const [awayTeam,        setAwayTeam]         = useState<Team | null>(null)
+  const [homeGoals,       setHomeGoals]        = useState(0)
+  const [awayGoals,       setAwayGoals]        = useState(0)
+  const [date,            setDate]             = useState(todayLocal())
+  const [championshipId,  setChampionshipId]   = useState<number | ''>('')
+  const [championships,   setChampionships]    = useState<Championship[]>([])
+  const [chapLoading,     setChapLoading]      = useState(false)
 
-  // ── Timeline initial seconds ──
-  const [tlMinutes, setTlMinutes]              = useState(0)
-  const [tlSeconds, setTlSeconds]              = useState(0)
+  // ── Timeline (opcional) ──
+  const [createTimeline, setCreateTimeline] = useState(false)
+  const [tlMinutes,      setTlMinutes]      = useState(0)
+  const [tlSeconds,      setTlSeconds]      = useState(0)
 
   // ── Submission ──
-  const [submitting, setSubmitting]            = useState(false)
-  const [apiError, setApiError]                = useState<string | null>(null)
-  const [success, setSuccess]                  = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [apiError,   setApiError]   = useState<string | null>(null)
+  const [success,    setSuccess]    = useState(false)
 
-  // Carrega campeonatos ao montar (se modo oficial)
+  // Carrega campeonatos ao montar (modo oficial)
   useEffect(() => {
     if (isFriendly) return
     setChapLoading(true)
@@ -58,12 +59,8 @@ export const NewMatchPage: React.FC = () => {
       .finally(() => setChapLoading(false))
   }, [isFriendly])
 
-  // Limpa campeonato ao virar amistoso
-  useEffect(() => {
-    if (isFriendly) setChampionshipId('')
-  }, [isFriendly])
+  useEffect(() => { if (isFriendly) setChampionshipId('') }, [isFriendly])
 
-  // Limpa times ao trocar modo (campeonato/amistoso muda o endpoint de busca)
   const handleToggleFriendly = () => {
     setIsFriendly(prev => !prev)
     setHomeTeam(null)
@@ -71,7 +68,7 @@ export const NewMatchPage: React.FC = () => {
   }
 
   const handleSubmit = async () => {
-    // ── Validações client-side ──
+    // Validações client-side
     if (!homeTeam || !awayTeam) {
       setApiError('Selecione os dois times.')
       return
@@ -88,8 +85,6 @@ export const NewMatchPage: React.FC = () => {
     setSubmitting(true)
     setApiError(null)
 
-    const initialSeconds = tlMinutes * 60 + tlSeconds
-
     try {
       // 1. Cria a partida
       const { data: match } = await api.post('/matches', {
@@ -97,17 +92,22 @@ export const NewMatchPage: React.FC = () => {
         team_away:        awayTeam.name,
         home_goals:       homeGoals,
         away_goals:       awayGoals,
-        championship:     isFriendly ? null : (championships.find(c => c.id === championshipId)?.name ?? null),
+        championship:     isFriendly
+          ? null
+          : (championships.find(c => c.id === championshipId)?.name ?? null),
         date,
         is_friendly:      isFriendly,
         is_neutral_field: isNeutralField,
       })
 
-      // 2. Cria a timeline associada
-      await api.post('/timeline', {
-        id_match:               match.id,
-        minute_second_started:  initialSeconds,
-      })
+      // 2. Cria a timeline (OPCIONAL) — só se o usuário optou por isso
+      if (createTimeline) {
+        const initialSeconds = minSecToSeconds(tlMinutes, tlSeconds)
+        await api.post('/timeline', {
+          id_match:              match.id,
+          minute_second_started: initialSeconds,
+        })
+      }
 
       setSuccess(true)
       setTimeout(() => navigate('/'), 1200)
@@ -127,6 +127,7 @@ export const NewMatchPage: React.FC = () => {
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
+          aria-label="Voltar"
           className="p-1.5 rounded-lg hover:bg-turf-100 dark:hover:bg-turf-800 transition-colors text-turf-500 dark:text-turf-400"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -153,7 +154,7 @@ export const NewMatchPage: React.FC = () => {
         />
       </div>
 
-      {/* ── Campeonato (só no modo oficial) ── */}
+      {/* ── Campeonato ── */}
       {!isFriendly && (
         <section className="space-y-2">
           <label className="text-xs font-medium text-turf-500 dark:text-turf-400 uppercase tracking-wide block">
@@ -173,12 +174,11 @@ export const NewMatchPage: React.FC = () => {
                   setAwayTeam(null)
                 }}
                 className={cn(
-                  'w-full appearance-none rounded-lg border-2 px-3 py-2.5 text-sm',
+                  'w-full appearance-none rounded-lg border-2 px-3 py-2.5 text-sm pr-9',
                   'bg-white dark:bg-turf-800',
                   'border-turf-200 dark:border-turf-700',
                   'text-turf-900 dark:text-turf-100',
-                  'focus:outline-none focus:border-pitch-500',
-                  'transition-colors pr-9',
+                  'focus:outline-none focus:border-pitch-500 transition-colors',
                 )}
               >
                 <option value="">Selecione um campeonato...</option>
@@ -197,7 +197,6 @@ export const NewMatchPage: React.FC = () => {
         <h2 className="text-xs font-semibold text-turf-500 dark:text-turf-400 uppercase tracking-widest border-b border-turf-100 dark:border-turf-800 pb-2">
           Times
         </h2>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <TeamSearchInput
             championshipId={!isFriendly && selectedChampionship ? selectedChampionship.id : undefined}
@@ -220,18 +219,9 @@ export const NewMatchPage: React.FC = () => {
         {/* Placar inicial */}
         {homeTeam && awayTeam && (
           <div className="flex items-center justify-center gap-4 py-3 px-4 rounded-xl bg-turf-50 dark:bg-turf-800/40 border border-turf-100 dark:border-turf-700">
-            <GoalInput
-              label={homeTeam.name}
-              value={homeGoals}
-              onChange={setHomeGoals}
-            />
+            <GoalInput label={homeTeam.name} value={homeGoals} onChange={setHomeGoals} />
             <span className="font-mono font-bold text-lg text-turf-400 dark:text-turf-500 select-none">×</span>
-            <GoalInput
-              label={awayTeam.name}
-              value={awayGoals}
-              onChange={setAwayGoals}
-              align="right"
-            />
+            <GoalInput label={awayTeam.name} value={awayGoals} onChange={setAwayGoals} align="right" />
           </div>
         )}
       </section>
@@ -256,62 +246,85 @@ export const NewMatchPage: React.FC = () => {
         />
       </section>
 
-      {/* ── Tempo inicial da Timeline ── */}
-      <section className="space-y-2">
-        <label className="text-xs font-medium text-turf-500 dark:text-turf-400 uppercase tracking-wide block">
-          Tempo Inicial da Timeline
-        </label>
-        <p className="text-xs text-turf-400 dark:text-turf-500">
-          Se a partida já começou, informe o tempo atual para sincronizar a timeline.
-        </p>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <input
-              type="number"
-              min={0}
-              max={120}
-              value={tlMinutes}
-              onChange={e => setTlMinutes(Math.max(0, Math.min(120, Number(e.target.value))))}
-              className={cn(
-                'w-16 text-center rounded-lg border-2 px-2 py-2.5 text-sm font-mono',
-                'bg-white dark:bg-turf-800 border-turf-200 dark:border-turf-700',
-                'text-turf-900 dark:text-turf-100',
-                'focus:outline-none focus:border-pitch-500',
-              )}
-            />
-            <span className="text-xs text-turf-400">min</span>
+      {/* ── Timeline (opcional) ── */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-turf-700 dark:text-turf-300">
+              Iniciar Timeline junto com a partida?
+            </p>
+            <p className="text-xs text-turf-400 dark:text-turf-500 mt-0.5">
+              Você também pode criar a timeline depois, diretamente na tela da partida.
+            </p>
           </div>
-          <span className="text-turf-300 font-bold">:</span>
-          <div className="flex items-center gap-1.5">
-            <input
-              type="number"
-              min={0}
-              max={59}
-              value={tlSeconds}
-              onChange={e => setTlSeconds(Math.max(0, Math.min(59, Number(e.target.value))))}
-              className={cn(
-                'w-16 text-center rounded-lg border-2 px-2 py-2.5 text-sm font-mono',
-                'bg-white dark:bg-turf-800 border-turf-200 dark:border-turf-700',
-                'text-turf-900 dark:text-turf-100',
-                'focus:outline-none focus:border-pitch-500',
-              )}
-            />
-            <span className="text-xs text-turf-400">seg</span>
-          </div>
-          <span className="text-xs text-turf-300 dark:text-turf-600 ml-1">
-            = {tlMinutes * 60 + tlSeconds}s
-          </span>
+          <ToggleButton
+            icon={<Clock className="w-3.5 h-3.5" />}
+            label="Criar Timeline"
+            active={createTimeline}
+            onToggle={() => setCreateTimeline(p => !p)}
+          />
         </div>
+
+        {/* Campos de tempo — só exibidos quando o toggle está ativo */}
+        {createTimeline && (
+          <div className={cn(
+            'p-4 rounded-xl border border-turf-200 dark:border-turf-700',
+            'bg-turf-50 dark:bg-turf-800/40 space-y-3',
+          )}>
+            <p className="text-xs text-turf-500 dark:text-turf-400">
+              Se a partida já começou, informe o tempo atual para sincronizar a timeline.
+            </p>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number"
+                  min={0}
+                  max={120}
+                  value={tlMinutes}
+                  onChange={e => setTlMinutes(Math.max(0, Math.min(120, Number(e.target.value))))}
+                  aria-label="Minutos iniciais"
+                  className={cn(
+                    'w-16 text-center rounded-lg border-2 px-2 py-2.5 text-sm font-mono',
+                    'bg-white dark:bg-turf-800 border-turf-200 dark:border-turf-700',
+                    'text-turf-900 dark:text-turf-100',
+                    'focus:outline-none focus:border-pitch-500',
+                  )}
+                />
+                <span className="text-xs text-turf-400">min</span>
+              </div>
+              <span className="text-turf-300 font-bold">:</span>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number"
+                  min={0}
+                  max={59}
+                  value={tlSeconds}
+                  onChange={e => setTlSeconds(Math.max(0, Math.min(59, Number(e.target.value))))}
+                  aria-label="Segundos iniciais"
+                  className={cn(
+                    'w-16 text-center rounded-lg border-2 px-2 py-2.5 text-sm font-mono',
+                    'bg-white dark:bg-turf-800 border-turf-200 dark:border-turf-700',
+                    'text-turf-900 dark:text-turf-100',
+                    'focus:outline-none focus:border-pitch-500',
+                  )}
+                />
+                <span className="text-xs text-turf-400">seg</span>
+              </div>
+              <span className="text-xs text-turf-300 dark:text-turf-600 ml-1">
+                = {minSecToSeconds(tlMinutes, tlSeconds)}s
+              </span>
+            </div>
+          </div>
+        )}
       </section>
 
-      {/* ── Erro / Sucesso ── */}
+      {/* ── Feedback ── */}
       {apiError && (
         <div className="flex items-center gap-2.5 p-4 rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 text-sm">
           <AlertCircle className="w-4 h-4 shrink-0" />
           {apiError}
         </div>
       )}
-
       {success && (
         <div className="flex items-center gap-2.5 p-4 rounded-xl border border-pitch-200 dark:border-pitch-900 bg-pitch-50 dark:bg-pitch-950/20 text-pitch-700 dark:text-pitch-400 text-sm">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -331,7 +344,12 @@ export const NewMatchPage: React.FC = () => {
         )}
       >
         {submitting && <Spinner size="sm" className="border-white border-t-transparent" />}
-        {submitting ? 'Criando partida...' : 'Criar Partida e Iniciar Timeline'}
+        {submitting
+          ? 'Criando partida...'
+          : createTimeline
+          ? 'Criar Partida e Iniciar Timeline'
+          : 'Criar Partida'
+        }
       </button>
     </div>
   )
@@ -349,6 +367,7 @@ interface ToggleBtnProps {
 const ToggleButton: React.FC<ToggleBtnProps> = ({ icon, label, active, onToggle }) => (
   <button
     onClick={onToggle}
+    aria-pressed={active}
     className={cn(
       'flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 text-xs font-medium transition-all duration-150',
       active
@@ -360,7 +379,8 @@ const ToggleButton: React.FC<ToggleBtnProps> = ({ icon, label, active, onToggle 
     {label}
     {active
       ? <ToggleRight className="w-4 h-4 text-pitch-500" />
-      : <ToggleLeft  className="w-4 h-4 text-turf-300 dark:text-turf-600" />}
+      : <ToggleLeft  className="w-4 h-4 text-turf-300 dark:text-turf-600" />
+    }
   </button>
 )
 
@@ -379,6 +399,7 @@ const GoalInput: React.FC<GoalInputProps> = ({ label, value, onChange, align = '
     <div className="flex items-center gap-1">
       <button
         onClick={() => onChange(Math.max(0, value - 1))}
+        aria-label={`Diminuir gols de ${label}`}
         className="w-6 h-6 rounded flex items-center justify-center bg-turf-100 dark:bg-turf-700 text-turf-600 dark:text-turf-300 text-lg leading-none hover:bg-turf-200 dark:hover:bg-turf-600 transition-colors"
       >−</button>
       <span className="w-8 text-center font-mono font-bold text-lg text-turf-900 dark:text-turf-100">
@@ -386,6 +407,7 @@ const GoalInput: React.FC<GoalInputProps> = ({ label, value, onChange, align = '
       </span>
       <button
         onClick={() => onChange(value + 1)}
+        aria-label={`Aumentar gols de ${label}`}
         className="w-6 h-6 rounded flex items-center justify-center bg-turf-100 dark:bg-turf-700 text-turf-600 dark:text-turf-300 text-lg leading-none hover:bg-turf-200 dark:hover:bg-turf-600 transition-colors"
       >+</button>
     </div>
