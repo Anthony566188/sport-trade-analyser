@@ -8,9 +8,9 @@ export function useChronometer() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Inicia o cronômetro com um tempo base, mas o deixa pausado pronto para o play
-  const initialize = useCallback((startSeconds: number) => {
+  const initialize = useCallback((startSeconds: number, autoStart: boolean = false) => {
     setElapsed(startSeconds)
-    setStatus('paused')
+    setStatus(autoStart ? 'running' : 'paused')
   }, [])
 
   // Alterna entre rodando e pausado

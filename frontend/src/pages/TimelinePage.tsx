@@ -120,7 +120,7 @@ export const TimelinePage: React.FC = () => {
     })
     setTimeline(tl)
     // Inicializa o cronômetro no modo pausado (pronto para play)
-    chronometer.initialize(startSeconds)
+    chronometer.initialize(startSeconds, true)
 
     // Carrega eventos (vazio) para garantir o estado limpo
     const [evRes] = await Promise.all([
