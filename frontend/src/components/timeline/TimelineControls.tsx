@@ -62,11 +62,10 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
   // ── Foca o input ao entrar em modo de edição ──
   useEffect(() => {
     if (editing) {
-      setEditValue(secondsToDisplay(elapsed))
       setEditError(false)
       setTimeout(() => inputRef.current?.select(), 50)
     }
-  }, [editing, elapsed])
+  }, [editing])
 
   // ── Confirma a edição manual ──
   const commitEdit = () => {
@@ -163,7 +162,12 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
           ) : (
             /* ── Display do tempo ── */
             <button
-              onClick={() => !disabled && !isIdle && setEditing(true)}
+              onClick={() => {
+                if (!disabled && !isIdle) {
+                  setEditValue(secondsToDisplay(elapsed)) // Captura o tempo EXATO do clique
+                  setEditing(true)
+                }
+              }}
               disabled={disabled || isIdle}
               aria-label="Clique para editar o tempo manualmente"
               title={(!disabled && !isIdle) ? 'Clique para editar' : undefined}
