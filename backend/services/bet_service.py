@@ -20,7 +20,7 @@ def get_by_id(id, db):
 def exit(id, exit_odd, db):
     bet: Bet = repository.get_by_id(id, db)
 
-    if bet.type == BetType.BACK:
+    if bet.type == BetType.BACK.value:
         profit = (bet.entry_odd / exit_odd * bet.stake) - bet.stake
     else:
         profit = bet.stake * (1 - bet.entry_odd / exit_odd)
@@ -32,7 +32,7 @@ def exit(id, exit_odd, db):
 
 
 def update(id: int, updated_bet: Bet, db: Session):
-    method_exists = method_repository.get_by_id(updated_bet.id_method, db)
+    method_repository.get_by_id(updated_bet.id_method, db)
     bet: Bet = repository.get_by_id(id, db)
 
     if bet.exit_odd is None and updated_bet.exit_odd != None:

@@ -1,6 +1,8 @@
-- Devo registrar a saída na timeline?
-- É possível salvar número arredondado no banco?
-- Quero que no final da timeline, apareça o lucro obtido e eu possa alterá-lo
+preencher minute exitodd
+aplicar regra de negócio em minute exitodd
+
+- Deve ser possível alterar a exit_odd? se sim, deve ser feito o cálculo
+- Quero que no final da timeline de forma destacada, apareça o lucro obtido e eu possa alterá-lo
 - Ao deletar uma partida, deleta a aposta também?
 - Ao dar um refresh, o cronometro zera
 - Não consigo mudar o time selecionado!
