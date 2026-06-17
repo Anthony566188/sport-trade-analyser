@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 import repositories.method_repository as method_repository
 import repositories.bet_repository as repository
 from models.bet import Bet
+from models.enums.bet_type import BetType
 
 
 def create(bet, db):
@@ -19,7 +20,11 @@ def get_by_id(id, db):
 def exit(id, exit_odd, db):
     bet: Bet = repository.get_by_id(id, db)
 
-    profit = (bet.entry_odd / exit_odd * bet.stake) - bet.stake
+    if bet.type == BetType.BACK:
+        profit = (bet.entry_odd / exit_odd * bet.stake) - bet.stake
+    else:
+        profit = bet.stake * (1 - bet.entry_odd / exit_odd)
+
     bet.profit_in_money = profit
     bet.exit_odd = exit_odd
 

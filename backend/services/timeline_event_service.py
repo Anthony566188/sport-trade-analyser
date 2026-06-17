@@ -3,7 +3,6 @@ import repositories.timeline_repository as timeline_repository
 import repositories.match_repository as match_repository
 import repositories.bet_repository as bet_repository
 import repositories.criterion_repository as criterion_repository
-from models.criterion import Criterion
 from models.match import Match
 
 from models.timeline_event import TimelineEvent

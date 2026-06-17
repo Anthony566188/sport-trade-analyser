@@ -1,0 +1,2 @@
+class DuplicateEntityError(Exception):
+    pass

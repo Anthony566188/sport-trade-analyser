@@ -1,7 +1,22 @@
-- não consigo criar aposta
-- Não consigo visuzalizar todos os times
-- a timeline não necessariamente precisa ser criada imediatamente após a criação da partida.
+- Devo registrar a saída na timeline?
+- É possível salvar número arredondado no banco?
+- Quero que no final da timeline, apareça o lucro obtido e eu possa alterá-lo
+- Ao deletar uma partida, deleta a aposta também?
+- Ao dar um refresh, o cronometro zera
+- Não consigo mudar o time selecionado!
+- Mensagem de erro: dois eventos ao mesmo tempo
+- Adicionar 'contra-ataque'
+- Não consigo visualizar todos os times
+- Melhorar a experincia de definir a data de inicio da timeline
+- Não precisa ter um botão para acessar a timeline, basta clicar na partida
+- Criar um getbyid para timeline
+- Remover description
 - se o usuário atualizar uma partida, interfere na timeline?
 - Limite de 2700 segundos: A API supõe que o usuário criará uma nova timeline para o 2º tempo (já que o tempo é travado em 45 min de limite). Eventos de segundo tempo (ex: 60 minutos / 3600s) lançam erro 400. O payload a seguir segue essa restrição de código.
 - Restrição de edição do exit_odd: A regra if bet.exit_odd is None and updated_bet.exit_odd != None indica que uma aposta NÃO pode ser finalizada/encerrada usando o método PUT /bet/{id}. Ela só pode ser encerrada pelo método especializado PUT /bet/{id}/exit/{exit_odd}.
 - não pode ter o mesmo jogo no mesmo dia
+- Devo ser capaz de alterar o inicio da timeline
+- Mudar nome no front
+- Deve redirecionar para a timeline
+- Mostrar o tempo finalizado da timeline
+- ao clicar deve descelecionar
