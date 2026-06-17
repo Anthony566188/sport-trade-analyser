@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
   ArrowLeft, Plus, Zap, Target,
-  Layers, Trash2, AlertCircle,
+  Layers, Trash2, AlertCircle, CheckCircle, Edit2
 } from 'lucide-react'
 import api from '../services/api'
 import { betService } from '../services/betService'
@@ -14,7 +14,7 @@ import { secondsToDisplay } from '../utils/time'
 import { cn } from '../utils/cn'
 import type {
   Match, Timeline, TimelineEvent, EventType,
-  Criterion, Method, BetType,
+  Criterion, Method, BetType, Bet, UpdateBetRequestPayload
 } from '../types'
 import { EVENT_TYPE_LABELS } from '../types'
 
@@ -43,6 +43,7 @@ export const TimelinePage: React.FC = () => {
   const [match,    setMatch]    = useState<Match    | null>(null)
   const [timeline, setTimeline] = useState<Timeline | null>(null)
   const [events,   setEvents]   = useState<TimelineEvent[]>([])
+  const [bets,     setBets]     = useState<Record<number, Bet>>({}) // Cache local das apostas na timeline
   const [criteria, setCriteria] = useState<Criterion[]>([])
   const [methods,  setMethods]  = useState<Method[]>([])
   const [loading,  setLoading]  = useState(true)
@@ -60,11 +61,19 @@ export const TimelinePage: React.FC = () => {
   const [addingEvt,  setAddingEvt]  = useState(false)
   const [panelError, setPanelError] = useState<string | null>(null)
 
-  // ── Aposta ──
+  // ── Aposta (Criação) ──
   const [betMethodId, setBetMethodId] = useState<number | ''>('')
   const [betStake,    setBetStake]    = useState('')
   const [betEntryOdd, setBetEntryOdd] = useState('')
   const [betType,     setBetType]     = useState<BetType>('BACK')
+
+  // ── Aposta (Edição) ──
+  const [editingBet,  setEditingBet]  = useState<Bet | null>(null)
+  const [editBetData, setEditBetData] = useState({ id_method: '', stake: '', entry_odd: '', type: 'BACK' as BetType, exit_odd: '' })
+
+  // ── Aposta (Cashout) ──
+  const [cashoutBet,      setCashoutBet]      = useState<Bet | null>(null)
+  const [cashoutOddValue, setCashoutOddValue] = useState('')
 
   // ── Carga inicial ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -72,7 +81,6 @@ export const TimelinePage: React.FC = () => {
       try {
         const [mRes, tRes] = await Promise.all([
           api.get<Match>(`/matches/${matchId}`),
-          // timeline pode não existir — capturamos o erro sem quebrar
           api.get<Timeline>(`/timeline/match/${matchId}`).catch(() => null),
         ])
         setMatch(mRes.data)
@@ -81,20 +89,29 @@ export const TimelinePage: React.FC = () => {
         setTimeline(tl)
 
         if (tl) {
-          // Inicializa o cronômetro com o tempo base da timeline
           chronometer.initialize(tl.minute_second_started)
 
-          // Carrega eventos, critérios e métodos em paralelo
           const [evRes, crRes, mtRes] = await Promise.all([
             api.get<TimelineEvent[]>(`/timeline-event/timeline/${tl.id}`),
             api.get<Criterion[]>('/criterion'),
             api.get<Method[]>('/method'),
           ])
-          setEvents(evRes.data)
+          
+          const fetchedEvents = evRes.data
+          setEvents(fetchedEvents)
           setCriteria(crRes.data)
           setMethods(mtRes.data)
+
+          // Extrai e carrega os detalhes das apostas amarradas aos eventos
+          const betIds = fetchedEvents.map(e => e.id_bet).filter((id): id is number => id !== null)
+          if (betIds.length > 0) {
+            const betsData = await Promise.all(betIds.map(id => betService.getById(id).catch(() => null)))
+            const newBets: Record<number, Bet> = {}
+            betsData.forEach(b => { if (b) newBets[b.id] = b })
+            setBets(newBets)
+          }
+
         } else {
-          // Mesmo sem timeline, carregamos critérios e métodos
           const [crRes, mtRes] = await Promise.all([
             api.get<Criterion[]>('/criterion'),
             api.get<Method[]>('/method'),
@@ -119,10 +136,8 @@ export const TimelinePage: React.FC = () => {
       minute_second_started: startSeconds,
     })
     setTimeline(tl)
-    // Inicializa o cronômetro no modo pausado (pronto para play)
     chronometer.initialize(startSeconds, true)
 
-    // Carrega eventos (vazio) para garantir o estado limpo
     const [evRes] = await Promise.all([
       api.get<TimelineEvent[]>(`/timeline-event/timeline/${tl.id}`),
     ])
@@ -166,30 +181,29 @@ export const TimelinePage: React.FC = () => {
     setAddingEvt(true)
     setPanelError(null)
 
-    // Regra do backend: minute_second ∈ [0, 2700]
-    // additional_minute_second só existe se minute_second === 2700
-    const minuteSecond           = Math.min(chronometer.elapsed, 2700)
-    const additionalMinuteSecond = chronometer.elapsed > 2700
-      ? chronometer.elapsed - 2700
-      : null
+    const minuteSecond = Math.min(chronometer.elapsed, 2700)
+    const additionalMinuteSecond = chronometer.elapsed > 2700 ? chronometer.elapsed - 2700 : null
 
     try {
       let newEvent: TimelineEvent | null = null
 
       if (eventMode === 'bet') {
-        if (!betMethodId)                          { setPanelError('Selecione o método.');        setAddingEvt(false); return }
-        if (!betStake || Number(betStake) <= 0)    { setPanelError('Informe um stake válido.');   setAddingEvt(false); return }
-        if (!betEntryOdd || Number(betEntryOdd) <= 1) { setPanelError('Informe uma odd válida (> 1).'); setAddingEvt(false); return }
+        if (!betMethodId)                             { setPanelError('Selecione o método.'); return }
+        if (!betStake || Number(betStake) <= 0)       { setPanelError('Informe um stake válido.'); return }
+        if (!betEntryOdd || Number(betEntryOdd) <= 1) { setPanelError('Informe uma odd válida (> 1).'); return }
 
-        // Passo 1 — cria a aposta
+        // Cria aposta
         const bet = await betService.create({
           id_method:  Number(betMethodId),
           stake:      Number(betStake),
           entry_odd:  Number(betEntryOdd),
           type:       betType,
         })
+        
+        // Mantém a aposta em cache
+        setBets(prev => ({ ...prev, [bet.id]: bet }))
 
-        // Passo 2 — vincula à timeline
+        // Vincula na timeline
         const { data } = await api.post<TimelineEvent>('/timeline-event', {
           id_timeline:              timeline.id,
           id_bet:                   bet.id,
@@ -202,7 +216,7 @@ export const TimelinePage: React.FC = () => {
         newEvent = data
 
       } else if (eventMode === 'event') {
-        if (!selEvent) { setPanelError('Selecione o tipo de evento.'); setAddingEvt(false); return }
+        if (!selEvent) { setPanelError('Selecione o tipo de evento.'); return }
 
         const { data } = await api.post<TimelineEvent>('/timeline-event', {
           id_timeline:              timeline.id,
@@ -216,7 +230,7 @@ export const TimelinePage: React.FC = () => {
         newEvent = data
 
       } else if (eventMode === 'criterion') {
-        if (!selCrit) { setPanelError('Selecione um critério.'); setAddingEvt(false); return }
+        if (!selCrit) { setPanelError('Selecione um critério.'); return }
 
         const { data } = await api.post<TimelineEvent>('/timeline-event', {
           id_timeline:              timeline.id,
@@ -230,15 +244,10 @@ export const TimelinePage: React.FC = () => {
         newEvent = data
       }
 
-      if (newEvent) {
-        setEvents(prev => [newEvent!, ...prev])
-      }
+      if (newEvent) setEvents(prev => [newEvent!, ...prev])
 
-      // Fecha e reseta o painel
       setShowPanel(false)
-      setSelEvent(''); setSelCrit(''); setSelTeam('')
-      setBetMethodId(''); setBetStake(''); setBetEntryOdd(''); setBetType('BACK')
-
+      handleSetEventMode('event')
     } catch (e) {
       setPanelError(e instanceof Error ? e.message : 'Erro ao registrar.')
     } finally {
@@ -246,13 +255,77 @@ export const TimelinePage: React.FC = () => {
     }
   }
 
-  // ── Deletar evento ────────────────────────────────────────────────────────
+  // ── Deletar evento / aposta ───────────────────────────────────────────────
   const handleDeleteEvent = async (evtId: number) => {
+    const evt = events.find(e => e.id === evtId)
+    if (!evt) return
+    if (!confirm('Remover este registro? Esta ação não pode ser desfeita.')) return
+
     try {
-      await api.delete(`/timeline-event/${evtId}`)
+      if (evt.id_bet) {
+        // Se for aposta, o backend realiza o CASCADE e exclui a timeline-event automaticamente.
+        await betService.delete(evt.id_bet)
+        setBets(prev => {
+          const next = { ...prev }
+          delete next[evt.id_bet!]
+          return next
+        })
+      } else {
+        await api.delete(`/timeline-event/${evtId}`)
+      }
+      // Remove do feed visual
       setEvents(prev => prev.filter(e => e.id !== evtId))
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Erro ao remover.')
+    }
+  }
+
+  // ── Editar Aposta ─────────────────────────────────────────────────────────
+  const openEditBet = (bet: Bet) => {
+    setEditingBet(bet)
+    setEditBetData({
+      id_method: bet.id_method.toString(),
+      stake: bet.stake.toString(),
+      entry_odd: bet.entry_odd.toString(),
+      type: bet.type,
+      exit_odd: bet.exit_odd !== null ? bet.exit_odd.toString() : '',
+    })
+  }
+
+  const handleUpdateBet = async () => {
+    if (!editingBet) return
+    try {
+      const payload: UpdateBetRequestPayload = {
+        id_method: Number(editBetData.id_method),
+        stake: Number(editBetData.stake),
+        entry_odd: Number(editBetData.entry_odd),
+        type: editBetData.type,
+        exit_odd: editBetData.exit_odd ? Number(editBetData.exit_odd) : null
+      }
+      const updated = await betService.update(editingBet.id, payload)
+      setBets(prev => ({ ...prev, [updated.id]: updated }))
+      setEditingBet(null)
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Erro ao atualizar aposta.')
+    }
+  }
+
+  // ── Cashout de Aposta ─────────────────────────────────────────────────────
+  const openCashout = (bet: Bet) => {
+    setCashoutBet(bet)
+    setCashoutOddValue('')
+  }
+
+  const handleCashout = async () => {
+    if (!cashoutBet || !cashoutOddValue) return
+    try {
+      const odd = Number(cashoutOddValue)
+      if (odd <= 1) { alert('Odd deve ser maior que 1'); return }
+      const updated = await betService.exit(cashoutBet.id, odd)
+      setBets(prev => ({ ...prev, [updated.id]: updated }))
+      setCashoutBet(null)
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Erro ao encerrar aposta.')
     }
   }
 
@@ -260,14 +333,18 @@ export const TimelinePage: React.FC = () => {
   const getEventLabel = (evt: TimelineEvent): string => {
     if (evt.event)        return EVENT_TYPE_LABELS[evt.event]
     if (evt.id_criterion) return criteria.find(c => c.id === evt.id_criterion)?.title ?? 'Critério'
-    if (evt.id_bet)       return `Aposta #${evt.id_bet}`
+    if (evt.id_bet) {
+      const b = bets[evt.id_bet]
+      const method = methods.find(m => m.id === b?.id_method)
+      return method ? `Aposta: ${method.name}` : `Aposta #${evt.id_bet}`
+    }
     return 'Evento'
   }
 
   const getEventIcon = (evt: TimelineEvent): string => {
     if (evt.event)        return EVENT_ICONS[evt.event] ?? '📌'
     if (evt.id_criterion) return '🎯'
-    if (evt.id_bet)       return '📊'
+    if (evt.id_bet)       return '💵'
     return '📌'
   }
 
@@ -318,10 +395,8 @@ export const TimelinePage: React.FC = () => {
 
       {/* ── Cronômetro / Criar timeline ── */}
       {!timeline ? (
-        /* Partida sem timeline → painel de criação */
         <CreateTimelinePainel onConfirm={handleCreateTimeline} />
       ) : isClosed ? (
-        /* Timeline encerrada → display estático */
         <div className={cn(
           'rounded-2xl p-5 flex items-center gap-4 border',
           'bg-turf-50 dark:bg-turf-800/40 border-turf-200 dark:border-turf-700',
@@ -334,7 +409,6 @@ export const TimelinePage: React.FC = () => {
           </span>
         </div>
       ) : (
-        /* Timeline ativa → controles completos */
         <TimelineControls
           elapsed={chronometer.elapsed}
           status={chronometer.status}
@@ -345,7 +419,7 @@ export const TimelinePage: React.FC = () => {
         />
       )}
 
-      {/* ── Registrar evento (só quando timeline ativa e não encerrada) ── */}
+      {/* ── Registrar evento ── */}
       {timeline && !isClosed && (
         <div>
           <button
@@ -411,7 +485,7 @@ export const TimelinePage: React.FC = () => {
                 </select>
               </div>
 
-              {/* Modo Evento: grade de tipos */}
+              {/* Modo Evento */}
               {eventMode === 'event' && (
                 <div>
                   <label className="field-label">Tipo de Evento</label>
@@ -444,9 +518,7 @@ export const TimelinePage: React.FC = () => {
                   {criteria.length === 0 ? (
                     <p className="text-xs text-turf-400 dark:text-turf-500 py-2">
                       Nenhum critério cadastrado.{' '}
-                      <Link to="/criteria" className="text-pitch-600 dark:text-pitch-400 underline">
-                        Criar critério →
-                      </Link>
+                      <Link to="/criteria" className="text-pitch-600 dark:text-pitch-400 underline">Criar critério →</Link>
                     </p>
                   ) : (
                     <select
@@ -472,9 +544,7 @@ export const TimelinePage: React.FC = () => {
                     {methods.length === 0 ? (
                       <p className="text-xs text-turf-400 dark:text-turf-500 py-2">
                         Nenhum método cadastrado.{' '}
-                        <Link to="/settings" className="text-pitch-600 dark:text-pitch-400 underline">
-                          Criar método →
-                        </Link>
+                        <Link to="/settings" className="text-pitch-600 dark:text-pitch-400 underline">Criar método →</Link>
                       </p>
                     ) : (
                       <select
@@ -518,26 +588,16 @@ export const TimelinePage: React.FC = () => {
                     <div>
                       <label className="field-label" htmlFor="bet-stake">Stake (R$)</label>
                       <input
-                        id="bet-stake"
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        placeholder="Ex: 10.00"
-                        value={betStake}
-                        onChange={e => setBetStake(e.target.value)}
+                        id="bet-stake" type="number" min="0.01" step="0.01" placeholder="Ex: 10.00"
+                        value={betStake} onChange={e => setBetStake(e.target.value)}
                         className="field-select"
                       />
                     </div>
                     <div>
                       <label className="field-label" htmlFor="bet-odd">Odd de Entrada</label>
                       <input
-                        id="bet-odd"
-                        type="number"
-                        min="1.01"
-                        step="0.01"
-                        placeholder="Ex: 1.85"
-                        value={betEntryOdd}
-                        onChange={e => setBetEntryOdd(e.target.value)}
+                        id="bet-odd" type="number" min="1.01" step="0.01" placeholder="Ex: 1.85"
+                        value={betEntryOdd} onChange={e => setBetEntryOdd(e.target.value)}
                         className="field-select"
                       />
                     </div>
@@ -555,9 +615,7 @@ export const TimelinePage: React.FC = () => {
               {/* Ações */}
               <div className="flex gap-2">
                 <button
-                  onClick={handleAddEvent}
-                  disabled={addingEvt}
-                  aria-label={`Registrar evento às ${secondsToDisplay(chronometer.elapsed)}`}
+                  onClick={handleAddEvent} disabled={addingEvt}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-pitch-600 hover:bg-pitch-700 text-white transition-colors disabled:opacity-50"
                 >
                   {addingEvt && <Spinner size="sm" className="border-white border-t-transparent" />}
@@ -566,9 +624,7 @@ export const TimelinePage: React.FC = () => {
                 <button
                   onClick={() => { setShowPanel(false); setPanelError(null) }}
                   className="px-3 py-2 rounded-lg text-sm text-turf-500 hover:bg-turf-100 dark:hover:bg-turf-700 transition-colors"
-                >
-                  Cancelar
-                </button>
+                >Cancelar</button>
               </div>
             </div>
           )}
@@ -577,37 +633,165 @@ export const TimelinePage: React.FC = () => {
 
       {/* ── Feed de eventos ── */}
       {events.length > 0 ? (
-        <ul className="space-y-2" aria-label="Eventos da timeline">
-          {events.map(evt => (
-            <li
-              key={evt.id}
-              className="group flex items-center gap-3 py-2.5 px-4 rounded-xl border border-turf-100 dark:border-turf-800 bg-white dark:bg-turf-800/40 hover:border-turf-200 dark:hover:border-turf-700 transition-colors"
-            >
-              <span className="font-mono text-xs text-turf-400 dark:text-turf-500 w-12 shrink-0">
-                {secondsToDisplay(evt.minute_second + (evt.additional_minute_second ?? 0))}
-              </span>
-              <span className="text-lg shrink-0" aria-hidden>{getEventIcon(evt)}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-turf-900 dark:text-turf-100">
-                  {getEventLabel(evt)}
-                </p>
-                <p className="text-xs text-turf-400 dark:text-turf-500">{evt.team}</p>
-              </div>
-              <button
-                onClick={() => handleDeleteEvent(evt.id)}
-                aria-label={`Remover evento de ${getEventLabel(evt)}`}
-                className="opacity-0 group-hover:opacity-100 text-turf-300 dark:text-turf-600 hover:text-red-400 transition-all"
+        <ul className="space-y-3" aria-label="Eventos da timeline">
+          {events.map(evt => {
+            const betInfo = evt.id_bet ? bets[evt.id_bet] : null
+
+            return (
+              <li
+                key={evt.id}
+                className="group flex flex-col sm:flex-row items-start sm:items-center gap-3 py-3 px-4 rounded-xl border border-turf-100 dark:border-turf-800 bg-white dark:bg-turf-800/40 hover:border-turf-200 dark:hover:border-turf-700 transition-colors"
               >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </li>
-          ))}
+                <span className="font-mono text-xs text-turf-400 dark:text-turf-500 w-12 shrink-0">
+                  {secondsToDisplay(evt.minute_second + (evt.additional_minute_second ?? 0))}
+                </span>
+                
+                <span className="text-lg shrink-0 hidden sm:block" aria-hidden>{getEventIcon(evt)}</span>
+                
+                <div className="flex-1 min-w-0 w-full">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-turf-900 dark:text-turf-100 flex items-center gap-2">
+                      <span className="sm:hidden">{getEventIcon(evt)}</span>
+                      {getEventLabel(evt)}
+                      {betInfo && (
+                        <span className={cn(
+                          "text-[10px] px-1.5 py-0.5 rounded font-bold uppercase",
+                          betInfo.type === 'BACK' ? 'bg-pitch-100 text-pitch-700 dark:bg-pitch-900 dark:text-pitch-400' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-400'
+                        )}>{betInfo.type}</span>
+                      )}
+                      {betInfo?.exit_odd && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-turf-200 text-turf-700 dark:bg-turf-700 dark:text-turf-300">
+                          Encerrada
+                        </span>
+                      )}
+                    </p>
+                    {/* Botões de Ação para Apostas */}
+                    <div className="flex items-center gap-1.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                      {betInfo && betInfo.exit_odd === null && (
+                        <button onClick={() => openCashout(betInfo)} title="Realizar Cashout" className="text-xs flex items-center gap-1 px-2 py-1 rounded bg-pitch-50 text-pitch-600 hover:bg-pitch-100 dark:bg-pitch-900/50 dark:hover:bg-pitch-900">
+                          <CheckCircle className="w-3.5 h-3.5" /> Cashout
+                        </button>
+                      )}
+                      {betInfo && (
+                        <button onClick={() => openEditBet(betInfo)} title="Editar Aposta" className="p-1 text-turf-400 hover:text-blue-500 transition-colors">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button onClick={() => handleDeleteEvent(evt.id)} title="Remover" className="p-1 text-turf-400 hover:text-red-500 transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-turf-400 dark:text-turf-500 mb-1">{evt.team}</p>
+
+                  {/* Detalhes se for uma Aposta */}
+                  {betInfo && (
+                    <div className="mt-2 text-xs grid grid-cols-2 sm:flex sm:gap-6 gap-2 text-turf-600 dark:text-turf-400 bg-turf-50 dark:bg-turf-900/30 p-2 rounded-lg border border-turf-100 dark:border-turf-800">
+                      <div><span className="font-semibold block text-turf-400 text-[10px] uppercase">Stake</span>R$ {betInfo.stake}</div>
+                      <div><span className="font-semibold block text-turf-400 text-[10px] uppercase">Odd In</span>{betInfo.entry_odd}</div>
+                      {betInfo.exit_odd && (
+                        <>
+                          <div><span className="font-semibold block text-turf-400 text-[10px] uppercase">Odd Out</span>{betInfo.exit_odd}</div>
+                          <div>
+                            <span className="font-semibold block text-turf-400 text-[10px] uppercase">Lucro</span>
+                            <span className={betInfo.profit_in_money && betInfo.profit_in_money >= 0 ? 'text-green-600 dark:text-green-400 font-bold' : 'text-red-600 dark:text-red-400 font-bold'}>
+                              R$ {betInfo.profit_in_money?.toFixed(2)}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </li>
+            )
+          })}
         </ul>
       ) : timeline ? (
         <div className="py-12 text-center text-sm text-turf-400 dark:text-turf-500">
           Nenhum evento registrado ainda.
         </div>
       ) : null}
+
+      {/* ── MODAIS SOBREPOSTOS ── */}
+      
+      {/* Modal Cashout */}
+      {cashoutBet && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-turf-900 rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+            <h3 className="text-lg font-bold text-turf-900 dark:text-turf-100">Encerrar Aposta (Cashout)</h3>
+            <p className="text-sm text-turf-500 dark:text-turf-400">Aposta #{cashoutBet.id} — Stake R$ {cashoutBet.stake}</p>
+            <div>
+              <label className="field-label">Odd de Saída</label>
+              <input type="number" step="0.01" min="1.01" value={cashoutOddValue} onChange={e => setCashoutOddValue(e.target.value)} className="field-select" autoFocus />
+            </div>
+            <div className="flex gap-2 justify-end pt-2">
+              <button onClick={() => setCashoutBet(null)} className="px-4 py-2 text-sm text-turf-600 hover:bg-turf-100 dark:text-turf-400 rounded-lg">Cancelar</button>
+              <button onClick={handleCashout} className="px-4 py-2 text-sm bg-pitch-600 hover:bg-pitch-700 text-white rounded-lg font-medium">Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar Aposta */}
+      {editingBet && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-turf-900 rounded-2xl p-5 w-full max-w-md space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold text-turf-900 dark:text-turf-100">Editar Aposta #{editingBet.id}</h3>
+            
+            <div className="space-y-3">
+              <div>
+                <label className="field-label">Método</label>
+                <select value={editBetData.id_method} onChange={e => setEditBetData(d => ({ ...d, id_method: e.target.value }))} className="field-select">
+                  <option value="">Selecione...</option>
+                  {methods.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="field-label">Tipo</label>
+                <div className="flex gap-2">
+                  {(['BACK', 'LAY'] as BetType[]).map(t => (
+                    <button
+                      key={t} onClick={() => setEditBetData(d => ({ ...d, type: t }))}
+                      className={cn(
+                        'flex-1 py-2 rounded-lg text-xs font-semibold border-2 transition-colors',
+                        editBetData.type === t ? (t === 'BACK' ? 'border-pitch-500 bg-pitch-50 text-pitch-700' : 'border-red-400 bg-red-50 text-red-600') : 'border-turf-200 text-turf-500'
+                      )}
+                    >{t}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="field-label">Stake (R$)</label>
+                  <input type="number" step="0.01" min="0.01" value={editBetData.stake} onChange={e => setEditBetData(d => ({ ...d, stake: e.target.value }))} className="field-select" />
+                </div>
+                <div>
+                  <label className="field-label">Odd In</label>
+                  <input type="number" step="0.01" min="1.01" value={editBetData.entry_odd} onChange={e => setEditBetData(d => ({ ...d, entry_odd: e.target.value }))} className="field-select" />
+                </div>
+              </div>
+
+              {/* Só exibe Exit Odd se ela já estava definida antes (já houve cashout) */}
+              {editingBet.exit_odd !== null && (
+                <div>
+                  <label className="field-label">Odd Out (Cashout)</label>
+                  <input type="number" step="0.01" min="1.01" value={editBetData.exit_odd} onChange={e => setEditBetData(d => ({ ...d, exit_odd: e.target.value }))} className="field-select" />
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 justify-end pt-3">
+              <button onClick={() => setEditingBet(null)} className="px-4 py-2 text-sm text-turf-600 hover:bg-turf-100 dark:text-turf-400 rounded-lg">Cancelar</button>
+              <button onClick={handleUpdateBet} className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">Salvar Alterações</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

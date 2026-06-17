@@ -110,6 +110,15 @@ export interface BetRequestPayload {
   type: BetType;
 }
 
+// Reflete a classe UpdateBetRequest do Python
+export interface UpdateBetRequestPayload {
+  id_method: number;
+  stake: number;
+  entry_odd: number;
+  type: BetType;
+  exit_odd?: number | null;
+}
+
 export interface Bet {
   id: number;
   id_method: number;
