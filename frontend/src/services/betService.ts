@@ -39,10 +39,15 @@ export const betService = {
 
   /**
    * Realiza o Cashout (encerra a aposta).
-   * PUT /bet/{id}/exit/{exit_odd}
+   * PUT /bet/{id}/exit/{exit_odd}?exit_minute_second=X&exit_additional_minute_second=Y
    */
-  exit: async (id: number, exitOdd: number): Promise<Bet> => {
-    const { data } = await api.put<Bet>(`/bet/${id}/exit/${exitOdd}`);
+  exit: async (id: number, exitOdd: number, exitMinuteSecond: number, exitAdditionalMinuteSecond: number | null = null): Promise<Bet> => {
+    const { data } = await api.put<Bet>(`/bet/${id}/exit/${exitOdd}`, null, {
+      params: {
+        exit_minute_second: exitMinuteSecond,
+        exit_additional_minute_second: exitAdditionalMinuteSecond
+      }
+    });
     return data;
   },
 };

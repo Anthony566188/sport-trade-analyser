@@ -69,7 +69,11 @@ export const TimelinePage: React.FC = () => {
 
   // ── Aposta (Edição) ──
   const [editingBet,  setEditingBet]  = useState<Bet | null>(null)
-  const [editBetData, setEditBetData] = useState({ id_method: '', stake: '', entry_odd: '', type: 'BACK' as BetType, exit_odd: '' })
+  const [editBetData, setEditBetData] = useState({ 
+    id_method: '', stake: '', entry_odd: '', type: 'BACK' as BetType, exit_odd: '',
+    exit_minute_second: null as number | null,
+    exit_additional_minute_second: null as number | null 
+  })
 
   // ── Aposta (Cashout) ──
   const [cashoutBet,      setCashoutBet]      = useState<Bet | null>(null)
@@ -289,6 +293,8 @@ export const TimelinePage: React.FC = () => {
       entry_odd: bet.entry_odd.toString(),
       type: bet.type,
       exit_odd: bet.exit_odd !== null ? bet.exit_odd.toString() : '',
+      exit_minute_second: bet.exit_minute_second ?? null,
+      exit_additional_minute_second: bet.exit_additional_minute_second ?? null
     })
   }
 
@@ -300,7 +306,9 @@ export const TimelinePage: React.FC = () => {
         stake: Number(editBetData.stake),
         entry_odd: Number(editBetData.entry_odd),
         type: editBetData.type,
-        exit_odd: editBetData.exit_odd ? Number(editBetData.exit_odd) : null
+        exit_odd: editBetData.exit_odd ? Number(editBetData.exit_odd) : null,
+        exit_minute_second: editBetData.exit_minute_second,
+        exit_additional_minute_second: editBetData.exit_additional_minute_second
       }
       const updated = await betService.update(editingBet.id, payload)
       setBets(prev => ({ ...prev, [updated.id]: updated }))
@@ -321,7 +329,13 @@ export const TimelinePage: React.FC = () => {
     try {
       const odd = Number(cashoutOddValue)
       if (odd <= 1) { alert('Odd deve ser maior que 1'); return }
-      const updated = await betService.exit(cashoutBet.id, odd)
+
+      // Extrai o tempo da timeline no momento do clique
+      const elapsed = chronometer.elapsed
+      const minuteSecond = Math.min(elapsed, 2700)
+      const additional = elapsed > 2700 ? elapsed - 2700 : null
+
+      const updated = await betService.exit(cashoutBet.id, odd, minuteSecond, additional)
       setBets(prev => ({ ...prev, [updated.id]: updated }))
       setCashoutBet(null)
     } catch (e) {
@@ -693,6 +707,12 @@ export const TimelinePage: React.FC = () => {
                       {betInfo.exit_odd && (
                         <>
                           <div><span className="font-semibold block text-turf-400 text-[10px] uppercase">Odd Out</span>{betInfo.exit_odd}</div>
+
+                          {/* EXIBINDO O MOMENTO DA SAÍDA DA APOSTA */}
+                          {betInfo.exit_minute_second != null && (
+                            <div><span className="font-semibold block text-turf-400 text-[10px] uppercase">Saída aos</span>{secondsToDisplay(betInfo.exit_minute_second + (betInfo.exit_additional_minute_second ?? 0))}</div>
+                          )}
+ 
                           <div>
                             <span className="font-semibold block text-turf-400 text-[10px] uppercase">Lucro</span>
                             <span className={betInfo.profit_in_money && betInfo.profit_in_money >= 0 ? 'text-green-600 dark:text-green-400 font-bold' : 'text-red-600 dark:text-red-400 font-bold'}>
