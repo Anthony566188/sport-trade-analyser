@@ -44,12 +44,10 @@ def get_by_id(id: int, db: Session):
     return bet_exists
 
 
-def exit_bet(id: int, bet: Bet, db: Session):
-
+def exit_bet(bet: Bet, db: Session):
     db.commit()
     db.refresh(bet)
-
-    return {"message": f"Bet id {id} encerrada!"}
+    return bet
 
 
 def update(bet: Bet, db: Session):

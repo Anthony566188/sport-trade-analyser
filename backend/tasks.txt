@@ -1,8 +1,8 @@
 devo ser capaz de ajustar o lucro!
-- Deve ser possível alterar a exit_odd? se sim, deve ser feito o cálculo
 - Quero que no final da timeline, de forma destacada, apareça o lucro obtido e eu possa alterá-lo
 
-
+- Ao criar a timeline de forma automatica, deve redirecionar para a timeline e iniciar o cronometro automaticamente
+- Ao dar um cashout, deve exibir automaticamente as informações!
 - Ao deletar uma partida, deve deletar a aposta também!
 - Ao dar um refresh, o cronometro zera
 - Não consigo mudar o time selecionado!
@@ -25,3 +25,4 @@ devo ser capaz de ajustar o lucro!
 - adicionar penalti perdido
 - Mudar ordem de exibição de partidas
 - em que momento são feitas as requisições: method e criterion?
+- validação no back para odd ser > 1

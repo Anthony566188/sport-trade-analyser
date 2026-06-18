@@ -27,11 +27,10 @@ def exit(id, exit_odd, exit_minute_second, exit_additional_minute_second, db):
 
     bet.profit_in_money = profit
     bet.exit_odd = exit_odd
-
     bet.exit_minute_second = exit_minute_second
     bet.exit_additional_minute_second = exit_additional_minute_second
 
-    return repository.exit_bet(id, bet, db)
+    return repository.exit_bet(bet, db)
 
 
 def update(id: int, updated_bet: Bet, db: Session):
