@@ -5,22 +5,14 @@ from sqlalchemy.orm import Session
 
 from models.criterion import Criterion
 
-def create(criterion_data: Criterion, db):
-
-    criterion = Criterion(
-        title=criterion_data.title,
-        description=criterion_data.description,
-    )
-
+def create(criterion: Criterion, db):
     db.add(criterion)
     db.commit()
     db.refresh(criterion)
-
     return criterion
 
 def get_all(db: Session):
     return db.query(Criterion).all()
-
 
 def update(id: int, criterion_update: Criterion, db: Session):
     criterion: Criterion = db.query(Criterion).filter(Criterion.id == id).first()
@@ -39,7 +31,6 @@ def update(id: int, criterion_update: Criterion, db: Session):
 
     return criterion
 
-
 def delete(id: int, db: Session):
     criterion = db.query(Criterion).filter(Criterion.id == id).first()
 
@@ -53,7 +44,6 @@ def delete(id: int, db: Session):
     db.commit()
 
     return {"message": "Match deleted."}
-
 
 def get_by_id(id: int, db: Session) -> Criterion:
     criterion = db.query(Criterion).filter(Criterion.id == id).first()

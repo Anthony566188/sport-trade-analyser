@@ -1,6 +1,18 @@
-import repositories.criterion_repository as repository
+from datetime import datetime
 
-def create(criterion, db):
+import repositories.criterion_repository as repository
+from models.criterion import Criterion
+
+def create(criterion_data: Criterion, db):
+
+    criterion_data.created_at = datetime.now().date()
+
+    criterion = Criterion(
+        title=criterion_data.title,
+        description=criterion_data.description,
+        created_at=criterion_data.created_at,
+    )
+
     return repository.create(criterion, db)
 
 

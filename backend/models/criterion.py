@@ -12,6 +12,8 @@ class Criterion(Base):
 
     description = Column(String, nullable=True)
 
+    created_at = Column(String, nullable=False)
+
     timeline_event = relationship(
         "TimelineEvent",
         back_populates="criterion"
