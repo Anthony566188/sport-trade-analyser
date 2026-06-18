@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useLocation } from 'react-router-dom'
 import {
   ArrowLeft, Plus, Zap, Target,
   Layers, Trash2, AlertCircle, CheckCircle, Edit2
@@ -37,6 +37,7 @@ const EVENT_ICONS: Record<EventType, string> = {
 
 export const TimelinePage: React.FC = () => {
   const { id }  = useParams<{ id: string }>()
+  const location = useLocation()
   const matchId = Number(id)
 
   // ── Dados remotos ──
@@ -93,8 +94,12 @@ export const TimelinePage: React.FC = () => {
         setTimeline(tl)
 
         if (tl) {
-          chronometer.initialize(tl.minute_second_started)
-
+          // Recuperamos o estado inserido durante a navegação. Fallback (?? false) garante o fluxo normal.
+          const locationState = location.state as { autoStartTimeline?: boolean } | null
+          const autoStart = locationState?.autoStartTimeline ?? false
+          
+          chronometer.initialize(tl.minute_second_started, autoStart)
+          
           const [evRes, crRes, mtRes] = await Promise.all([
             api.get<TimelineEvent[]>(`/timeline-event/timeline/${tl.id}`),
             api.get<Criterion[]>('/criterion'),

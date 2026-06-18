@@ -100,7 +100,7 @@ export const NewMatchPage: React.FC = () => {
         is_neutral_field: isNeutralField,
       })
 
-      // 2. Cria a timeline (OPCIONAL) — só se o usuário optou por isso
+// 2. Cria a timeline (OPCIONAL) — só se o usuário optou por isso
       if (createTimeline) {
         const initialSeconds = minSecToSeconds(tlMinutes, tlSeconds)
         await api.post('/timeline', {
@@ -110,7 +110,15 @@ export const NewMatchPage: React.FC = () => {
       }
 
       setSuccess(true)
-      setTimeout(() => navigate('/'), 1200)
+      setTimeout(() => {
+        if (createTimeline) {
+          // Redireciona para a página da timeline recém-criada enviando a instrução de auto-start
+          navigate(`/timeline/${match.id}`, { state: { autoStartTimeline: true } })
+        } else {
+          // Redireciona para a home (Jogos do Dia) caso a timeline não tenha sido iniciada
+          navigate('/')
+        }
+      }, 1200)
     } catch (e) {
       setApiError(e instanceof Error ? e.message : 'Erro ao criar partida.')
     } finally {
