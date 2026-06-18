@@ -24,6 +24,10 @@ class Bet(Base):
 
     profit_in_money = Column(Numeric(10, 2), nullable=True)
 
+    exit_minute_second = Column(Integer, nullable=True)
+
+    exit_additional_minute_second = Column(Integer, nullable=True)
+
     timeline_event = relationship(
         "TimelineEvent",
         back_populates="bet",

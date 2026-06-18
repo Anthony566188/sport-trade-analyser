@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from decimal import Decimal
@@ -19,8 +21,14 @@ def get_by_id(id: int, db: Session = Depends(get_db)):
     return service.get_by_id(id, db)
 
 @router.put("/bet/{id}/exit/{exit_odd}")
-def exit_bet(id: int, exit_odd: Decimal, db: Session = Depends(get_db)):
-    return service.exit(id, exit_odd, db)
+def exit_bet(
+    id: int,
+    exit_odd: Decimal,
+    exit_minute_second: int,
+    exit_additional_minute_second: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    return service.exit(id, exit_odd, exit_minute_second, exit_additional_minute_second,db)
 
 @router.put("/bet/{id}")
 def update_bet(id: int, request: UpdateBetRequest, db: Session = Depends(get_db)):
