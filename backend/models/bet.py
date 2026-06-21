@@ -22,7 +22,13 @@ class Bet(Base):
 
     date = Column(String, nullable=False)
 
-    profit_in_money = Column(Numeric(10, 2), nullable=True)
+    entry_period = Column(String, nullable=False)
+
+    entry_minute_second = Column(Integer, nullable=False)
+
+    entry_additional_minute_second = Column(Integer, nullable=True)
+
+    exit_period = Column(String, nullable=True)
 
     exit_minute_second = Column(Integer, nullable=True)
 
