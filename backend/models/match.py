@@ -55,3 +55,9 @@ class Match(Base):
         uselist=False, # relacionamento 1 para 1
         cascade="all, delete-orphan", 
     )
+
+    bet = relationship(
+        "Bet",
+        back_populates="match",
+        cascade="all, delete-orphan",
+    )

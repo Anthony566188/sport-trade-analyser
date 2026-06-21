@@ -12,6 +12,10 @@ class Bet(Base):
 
     method = relationship("Method", back_populates="bet")
 
+    id_match = Column(Integer, ForeignKey('MATCHES.id'))
+
+    match = relationship("Match", back_populates="bet")
+
     stake = Column(Numeric, nullable=False)
 
     entry_odd = Column(Numeric, nullable=False)
