@@ -16,11 +16,9 @@ class TimelineEvent(Base):
 
     timeline = relationship("Timeline", back_populates="timeline_event")
 
-    id_bet = Column(Integer, ForeignKey('BETS.id'))
-
-    bet = relationship("Bet", back_populates="timeline_event")
-
     event = Column(String, nullable=True)
+
+    match_period = Column(String, nullable=False)
 
     minute_second = Column(Integer, nullable=False)
 
@@ -36,7 +34,8 @@ class TimelineEvent(Base):
             "id_timeline",
             "minute_second",
             "additional_minute_second",
-            name="TIMELINE_EVENTS_MINUTE_SECOND_ADDITIONAL_MINUTE_SECOND_ID_TIMELINE_UN"
+            "match_period",
+            name="TIMELINE_EVENTS_UNIQUE_TIME_UN"
         ),
         Index(
             "ux_timeline_minute_null",
