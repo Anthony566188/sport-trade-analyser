@@ -24,8 +24,6 @@ class TimelineEvent(Base):
 
     additional_minute_second = Column(Integer, nullable=True)
 
-    description = Column(String, nullable=True)
-
     team = Column(String, nullable=False)
 
     __table_args__ = (
