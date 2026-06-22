@@ -2,19 +2,24 @@ from fastapi import HTTPException
 from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
+from db_utils import handle_db_constraints
 from models.timeline_event import TimelineEvent
 from models.enums.match_period import PERIOD_ORDER
 
 def timeline_register(timeline_event: TimelineEvent, db):
     db.add(timeline_event)
-    db.commit()
-    db.refresh(timeline_event)
+    with handle_db_constraints(db):
+        db.commit()
+        db.refresh(timeline_event)
     return timeline_event
 
+
 def update_timeline_event(update_timeline: TimelineEvent, db: Session):
-    db.commit()
-    db.refresh(update_timeline)
+    with handle_db_constraints(db):
+        db.commit()
+        db.refresh(update_timeline)
     return update_timeline
+
 
 def delete_event(timeline_event: TimelineEvent, db: Session):
     db.delete(timeline_event)
@@ -40,6 +45,7 @@ def get_by_timeline(id_timeline: int, db: Session):
                     func.coalesce(TimelineEvent.additional_minute_second, 0).desc()
                 )
             )
+
 
 def get_by_id(id: int, db: Session) -> TimelineEvent:
     timeline_event = db.query(TimelineEvent).filter(TimelineEvent.id == id).first()
