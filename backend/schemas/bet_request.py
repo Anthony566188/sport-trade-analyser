@@ -34,7 +34,7 @@ class BetRequest(BaseModel):
             stake = self.stake,
             entry_odd = self.entry_odd,
             type = self.type.value,
-            entry_period = self.entry_period,
+            entry_period = self.entry_period.value,
             entry_minute_second = self.entry_minute_second,
             entry_additional_minute_second = self.entry_additional_minute_second,
         )

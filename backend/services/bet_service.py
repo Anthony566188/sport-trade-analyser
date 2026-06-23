@@ -7,6 +7,8 @@ import repositories.bet_repository as repository
 import repositories.match_repository as match_repository
 from models.bet import Bet
 from models.enums.bet_type import BetType
+from models.value_objects.match_time import MatchTime
+from schemas.bet_exit_request import BetExitRequest
 
 
 def create(bet: Bet, db):
@@ -35,14 +37,38 @@ def get_by_id(id, db):
     return repository.get_by_id(id, db)
 
 
-def exit(id, exit_odd, exit_minute_second, exit_additional_minute_second, db):
+def exit(id, exit_data: BetExitRequest, db) -> Bet:
     bet: Bet = repository.get_by_id(id, db)
 
-    bet.exit_odd = exit_odd
-    bet.exit_minute_second = exit_minute_second
-    bet.exit_additional_minute_second = exit_additional_minute_second
+    if bet.exit_period is not None:
+        raise ValueError("Esta aposta já foi encerrada.")
 
-    return repository.exit_bet(bet, db)
+    # Instancia os Objetos de Valor Temporais para comparação
+    time_entry = MatchTime(
+        period=bet.entry_period,
+        minute_second=bet.entry_minute_second,
+        additional_minute_second=bet.entry_additional_minute_second
+    )
+
+    time_exit = MatchTime(
+        period=exit_data.exit_period,
+        minute_second=exit_data.exit_minute_second,
+        additional_minute_second=exit_data.exit_additional_minute_second
+    )
+
+    # Validação Cronológica
+    if time_entry < time_exit:
+        raise ValueError(
+            "Inconsistência temporal: O tempo de saída da aposta "
+            "não pode ser anterior ao tempo de entrada."
+        )
+
+    bet.exit_odd = exit_data.exit_odd
+    bet.exit_period = exit_data.exit_period.value # Salva a string
+    bet.exit_minute_second = exit_data.exit_minute_second
+    bet.exit_additional_minute_second = exit_data.exit_additional_minute_second
+
+    return repository.update(bet, db)
 
 
 def update(id: int, updated_bet: Bet, db: Session):

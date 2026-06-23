@@ -5,6 +5,9 @@ from sqlalchemy.orm import Session
 from decimal import Decimal
 
 from database import get_db
+from exceptions.exceptions import InvalidPeriodError
+from models.enums.match_period import MatchPeriod
+from schemas.bet_exit_request import BetExitRequest
 from schemas.bet_request import BetRequest
 import services.bet_service as service
 from schemas.update_bet_request import UpdateBetRequest
@@ -13,22 +16,26 @@ router = APIRouter()
 
 @router.post("/bet")
 def create_bet(request: BetRequest, db: Session = Depends(get_db)):
-    bet = request.to_entity()
-    return service.create(bet, db)
+    try:
+        bet = request.to_entity()
+        return service.create(bet, db)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/bet/{id}")
 def get_by_id(id: int, db: Session = Depends(get_db)):
     return service.get_by_id(id, db)
 
-@router.put("/bet/{id}/exit/{exit_odd}")
+@router.put("/bet/{id}/exit")
 def exit_bet(
     id: int,
-    exit_odd: Decimal,
-    exit_minute_second: int,
-    exit_additional_minute_second: Optional[int] = None,
+    exit_data: BetExitRequest,
     db: Session = Depends(get_db)
 ):
-    return service.exit(id, exit_odd, exit_minute_second, exit_additional_minute_second,db)
+    try:
+        return service.exit(id, exit_data,db)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/bet/{id}")
 def update_bet(id: int, request: UpdateBetRequest, db: Session = Depends(get_db)):
