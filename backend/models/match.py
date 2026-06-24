@@ -32,9 +32,6 @@ class Match(Base):
     def is_friendly_match(self) -> bool:
         return bool(self.is_friendly)
 
-    def validate(self) -> None:
-        self.validate_friendly_championship()
-
     def validate_friendly_championship(self) -> None:
         has_championship = self.has_championship()
         is_friendly = self.is_friendly_match()

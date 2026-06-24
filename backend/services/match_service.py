@@ -13,6 +13,11 @@ def register_match(db,match_data):
             "Não é possível passar uma data passada"
         )
 
+    if match_data.team_home == match_data.team_away:
+        raise ValueError(
+            "Os dois times não podem ser iguais"
+        )
+
     match = Match(
         team_home=match_data.team_home,
         team_away=match_data.team_away,
@@ -23,7 +28,7 @@ def register_match(db,match_data):
         is_neutral_field=match_data.is_neutral_field,
         is_friendly=match_data.is_friendly,
     )
-    match.validate()
+    match.validate_friendly_championship()
 
     return repository.create_match(db, match)
 

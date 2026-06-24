@@ -25,13 +25,6 @@ def get_by_id(id: int, db: Session):
     return bet_exists
 
 
-def exit_bet(bet: Bet, db: Session):
-    with handle_db_constraints(db):
-        db.commit()
-        db.refresh(bet)
-    return bet
-
-
 def update(bet: Bet, db: Session):
     with handle_db_constraints(db):
         db.commit()

@@ -3,7 +3,7 @@ class BetChronologyError(ValueError):
         super().__init__(message)
 
 class InvalidPeriodError(ValueError):
-    def __init__(self, message="O período informado para a aposta é inválido."):
+    def __init__(self, message="O período informado é inválido."):
         super().__init__(message)
 
 class InvalidBetTypeError(ValueError):

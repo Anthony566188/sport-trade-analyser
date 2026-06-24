@@ -33,7 +33,7 @@ class TimelineEventRequest(BaseModel):
             id_criterion = self.id_criterion,
             id_timeline = self.id_timeline,
             event = self.event.value if self.event else None,
-            match_period = self.match_period,
+            match_period = self.match_period.value,
             minute_second = self.minute_second,
             additional_minute_second = self.additional_minute_second,
             team=self.team.upper().strip()

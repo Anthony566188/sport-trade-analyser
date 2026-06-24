@@ -20,7 +20,8 @@ STR_PERIOD_LIMITS: Dict[str, int] = {period.value: limit for period, limit in PE
 
 
 def check_football_limits(period: str, minute_second: int, additional_minute_second: int):
-    """Função pura que valida as regras físicas do esporte."""
+    """Função pura que valida as regras físicas do esporte.
+    (Valida se pode acrescimo e se o tempo condiz com o periodo)"""
     if period == 'HT' and additional_minute_second > 0:
         raise ValueError("O intervalo (HT) não pode ter acréscimos.")
 

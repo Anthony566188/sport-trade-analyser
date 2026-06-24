@@ -19,11 +19,10 @@ def handle_db_constraints(db: Session):
         db.rollback()
         error_msg = str(e.orig)
 
-        # Mapeamento centralizado de constraints para exceções
         if "CK_BETS_CHRONOLOGY" in error_msg:
             raise BetChronologyError()
 
-        elif "CK_BETS_ENTRY_PERIOD" in error_msg or "CK_BETS_EXIT_PERIOD" or "CK_MATCH_PERIOD_VALUES" in error_msg:
+        elif "CK_BETS_ENTRY_PERIOD" in error_msg or "CK_BETS_EXIT_PERIOD" in error_msg or "CK_MATCH_PERIOD_VALUES" in error_msg:
             raise InvalidPeriodError()
 
         elif "BETS_TYPE_CK" in error_msg:
@@ -44,6 +43,6 @@ def handle_db_constraints(db: Session):
         elif "CK_ADDITIONAL_TIME" in error_msg:
             raise AdditionalTimeError()
 
+        # Se a mensagem não corresponder a nenhum CHECK constraint conhecido, propaga a IntegrityError.
         else:
-            # Relança a exceção se for um erro de banco desconhecido
             raise e
