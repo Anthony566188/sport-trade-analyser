@@ -1,37 +1,62 @@
 from dataclasses import dataclass
 from functools import total_ordering
-from typing import Dict
+from typing import Dict, Tuple
 
 from models.enums.match_period import MatchPeriod, PERIOD_ORDER
 
 
 # CONSTANTE GLOBAL
-# Define os limites usando os Enums oficiais como chave
-PERIOD_LIMITS: Dict[MatchPeriod, int] = {
-    MatchPeriod.FIRST_HALF: 2700,   # 45 min
-    MatchPeriod.SECOND_HALF: 5400,  # 90 min
-    MatchPeriod.EXTRA_FIRST: 6300,  # 105 min
-    MatchPeriod.EXTRA_SECOND: 7200  # 120 min
+# Define as fronteiras (Piso, Teto) em segundos para cada período
+PERIOD_BOUNDARIES: Dict[MatchPeriod, Tuple[int, int]] = {
+    MatchPeriod.FIRST_HALF: (0, 2700),      # 0 a 45 min
+    MatchPeriod.HALF_TIME: (2700, 2700),    # Cravado nos 45 min (sem tempo corrido)
+    MatchPeriod.SECOND_HALF: (2700, 5400),  # 45 a 90 min
+    MatchPeriod.EXTRA_FIRST: (5400, 6300),  # 90 a 105 min
+    MatchPeriod.EXTRA_SECOND: (6300, 7200)  # 105 a 120 min
 }
 
 # Dicionário derivado automático para validações textuais
-# Resultado gerado: {'1H': 2700, '2H': 5400, 'E1': 6300, 'E2': 7200}
-STR_PERIOD_LIMITS: Dict[str, int] = {period.value: limit for period, limit in PERIOD_LIMITS.items()}
-
+# Resultado gerado: {'1H': (0, 2700), 'HT': (2700, 2700), '2H': (2700, 5400)...}
+STR_PERIOD_BOUNDARIES: Dict[str, Tuple[int, int]] = {
+    period.value: boundaries for period, boundaries in PERIOD_BOUNDARIES.items()
+}
 
 def check_football_limits(period: str, minute_second: int, additional_minute_second: int):
     """Função pura que valida as regras físicas do esporte.
     (Valida se pode acrescimo e se o tempo condiz com o periodo)"""
+
+    try:
+        period = MatchPeriod(period)
+    except ValueError:
+        raise ValueError(f"Período '{period}' inválido! Os valores aceitos para os períodos são: '1H'; '2H'; 'HT'; 'E1'; 'E2'.")
+
+
     if period == 'HT' and additional_minute_second > 0:
         raise ValueError("O intervalo (HT) não pode ter acréscimos.")
 
-    if period in STR_PERIOD_LIMITS:
-        limit = STR_PERIOD_LIMITS[period]
-        if minute_second > limit:
-            raise ValueError(f"O período {period} não pode ultrapassar {limit} segundos.")
-        if additional_minute_second > 0 and minute_second != limit:
-            raise ValueError(f"Acréscimos no período {period} só podem ser registrados exatamente aos {limit} segundos.")
+    if period in STR_PERIOD_BOUNDARIES:
+        min_limit, max_limit = STR_PERIOD_BOUNDARIES[period]
 
+        # Valida o Piso - Impede registrar tempo do passado no futuro
+        if minute_second < min_limit:
+            raise ValueError(
+                f"Inconsistência de período: O tempo para o período {period} "
+                f"não pode ser inferior a {min_limit} segundos."
+            )
+
+        # Valida o Teto - Impede estourar o tempo regulamentar
+        if minute_second > max_limit:
+            raise ValueError(
+                f"O tempo regulamentar para o período {period} "
+                f"não pode ultrapassar {max_limit} segundos."
+            )
+
+        # Valida se os acréscimos estão no exato limite do período (Teto)
+        if additional_minute_second > 0 and minute_second != max_limit:
+            raise ValueError(
+                f"Acréscimos no período {period} só podem ser "
+                f"registrados exatamente aos {max_limit} segundos."
+            )
 
 @total_ordering
 @dataclass(frozen=True)  # frozen=True garante que seja imutável, uma boa prática para Value Objects

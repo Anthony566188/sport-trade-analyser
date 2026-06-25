@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 
 import services.timeline_service as service
+from models.enums.match_period import MatchPeriod
 from schemas.timeline_request import TimelineRequest
 
 router = APIRouter()
@@ -16,9 +17,13 @@ def create_timeline(request: TimelineRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/timeline/stop/{id}")
-def stop_timeline(id: int, minute_second_finished: int, db: Session = Depends(get_db)):
+def stop_timeline(id: int,
+                  match_period: MatchPeriod,
+                  minute_second_finished: int,
+                  additional_minute_second_finished: int,
+                  db: Session = Depends(get_db)):
     try:
-        return service.stop(id, minute_second_finished, db)
+        return service.stop(id, match_period, minute_second_finished, additional_minute_second_finished, db)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

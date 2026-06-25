@@ -43,7 +43,7 @@ def get_by_timeline(id_timeline: int, db: Session):
                     TimelineEvent.minute_second.desc(),
                     # Se for null retorna 0
                     func.coalesce(TimelineEvent.additional_minute_second, 0).desc()
-                )
+                ).all()
             )
 
 
