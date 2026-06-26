@@ -26,7 +26,7 @@ def check_football_limits(period: str, minute_second: int, additional_minute_sec
     (Valida se pode acrescimo e se o tempo condiz com o periodo)"""
 
     try:
-        period = MatchPeriod(period)
+        MatchPeriod(period)
     except ValueError:
         raise ValueError(f"Período '{period}' inválido! Os valores aceitos para os períodos são: '1H'; '2H'; 'HT'; 'E1'; 'E2'.")
 

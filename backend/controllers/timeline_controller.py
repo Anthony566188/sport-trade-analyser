@@ -18,12 +18,12 @@ def create_timeline(request: TimelineRequest, db: Session = Depends(get_db)):
 
 @router.put("/timeline/stop/{id}")
 def stop_timeline(id: int,
-                  match_period: MatchPeriod,
+                  match_period_finished: MatchPeriod,
                   minute_second_finished: int,
                   additional_minute_second_finished: int,
                   db: Session = Depends(get_db)):
     try:
-        return service.stop(id, match_period, minute_second_finished, additional_minute_second_finished, db)
+        return service.stop(id, match_period_finished, minute_second_finished, additional_minute_second_finished, db)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

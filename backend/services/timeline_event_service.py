@@ -1,13 +1,13 @@
-from sqlalchemy.orm import Session
-
 import repositories.timeline_event_repository as repository
 import repositories.timeline_repository as timeline_repository
 import repositories.match_repository as match_repository
 import repositories.criterion_repository as criterion_repository
 from models.enums.event_type import EventType
+from models.enums.match_period import MatchPeriod
 from models.match import Match
 
 from models.timeline_event import TimelineEvent
+from models.value_objects.match_time import MatchTime
 
 
 def timeline_register(timeline_event_data: TimelineEvent, db):
@@ -19,27 +19,8 @@ def timeline_register(timeline_event_data: TimelineEvent, db):
     if timeline_event_data.id_criterion != None:
         criterion_repository.get_by_id(timeline_event_data.id_criterion, db)
 
-
     # BUSCA A PARTIDA (Match) atrelada a esta timeline
     match: Match = match_repository.get_by_id(timeline.id_match, db)
-
-    # O time passado deve pertencer à partida
-    team = timeline_event_data.team
-    _has_team_in_match(team, match)
-
-    # Calcula o tempo total do evento (regular + acréscimo)
-    event_time = timeline_event_data.minute_second + (timeline_event_data.additional_minute_second or 0)
-
-    # O tempo do evento deve estar entre o inicio e fim da timeline
-    _validate_timeline_range(event_time, timeline.minute_second_started, timeline.minute_second_finished)
-
-    # Se for gol, atualiza a tabela 'MATHES'
-    if timeline_event_data.event == "GOAL":
-        if match.team_home == team:
-            match.home_goals += 1
-        else:
-            match.away_goals += 1
-        match_repository.update(match, db)
 
     # Regra de negócio: Exatamente UM campo (entre: id_criterion e event) deve estar preenchido
     campos_preenchidos = sum([
@@ -53,6 +34,26 @@ def timeline_register(timeline_event_data: TimelineEvent, db):
             "É obrigatório associar exatamente UM dos campos "
             "(id_criterion ou event). Não é permitido enviar mais de um, nem nenhum."
         )
+
+
+    # O time passado deve pertencer à partida
+    team = timeline_event_data.team
+    _has_team_in_match(team, match)
+
+    # Busca a trinca temporal do evento e do inicio da timeline
+    event_time = MatchTime(MatchPeriod(timeline_event_data.match_period), timeline_event_data.minute_second, timeline_event_data.additional_minute_second or 0)
+    timeline_start_time = MatchTime(MatchPeriod(timeline.match_period_started), timeline.minute_second_started, timeline.additional_minute_second_started or 0)
+
+    # Validação para impedir que seja cadastrado um evento fora do intervalo de tempo da timeline
+    if timeline.match_period_finished is not None and timeline.minute_second_finished is not None:
+        timeline_finished_time = MatchTime(MatchPeriod(timeline.match_period_finished),
+                                           timeline.minute_second_finished,
+                                           timeline.additional_minute_second_finished or 0)
+
+        # O tempo do evento deve estar entre o inicio e fim da timeline
+        _validate_timeline_range(event_time, timeline_start_time, timeline_finished_time)
+    else:
+        _validate_timeline_range(event_time, timeline_start_time, None)
 
 
     timeline_event = TimelineEvent(
@@ -83,11 +84,22 @@ def update_timeline_event(id, update_timeline_event: TimelineEvent, db):
     # Verifica se o time passado é um dos times que estão se enfrentando
     _has_team_in_match(new_team, match)
 
-    # Calcula o novo tempo total do evento
-    event_time = update_timeline_event.minute_second + (update_timeline_event.additional_minute_second or 0)
+    # Busca a trinca temporal do evento e do inicio da timeline
+    event_time = MatchTime(MatchPeriod(update_timeline_event.match_period), update_timeline_event.minute_second,
+                           update_timeline_event.additional_minute_second or 0)
+    timeline_start_time = MatchTime(MatchPeriod(timeline.match_period_started), timeline.minute_second_started,
+                                    timeline.additional_minute_second_started or 0)
 
-    # Valida se está entre o inicio e o fim da timeline
-    _validate_timeline_range(event_time, timeline.minute_second_started, timeline.minute_second_finished)
+    # Validação para impedir que seja cadastrado um evento fora do intervalo de tempo da timeline
+    if timeline.match_period_finished is not None and timeline.minute_second_finished is not None:
+        timeline_finished_time = MatchTime(MatchPeriod(timeline.match_period_finished),
+                                           timeline.minute_second_finished,
+                                           timeline.additional_minute_second_finished or 0)
+
+        # O tempo do evento deve estar entre o inicio e fim da timeline
+        _validate_timeline_range(event_time, timeline_start_time, timeline_finished_time)
+    else:
+        _validate_timeline_range(event_time, timeline_start_time, None)
 
 
     # Se for passado um critério, verifica se ele existe
@@ -148,15 +160,16 @@ def _has_team_in_match(team: str, match: Match):
         )
 
 # Verifica se o tempo do evento está entre o inicio e o fim da timeline
-def _validate_timeline_range(event_time: int, start_time: int, finish_time: int):
+def _validate_timeline_range(event_time: MatchTime, start_time: MatchTime, finish_time: MatchTime | None):
     if event_time < start_time:
         raise ValueError(
-            f"Tempo inválido: O evento ({event_time}s) não pode "
-            f"acontecer antes da timeline começar ({start_time}s)."
+            f"Tempo inválido: O evento não pode "
+            f"acontecer antes da timeline começar "
+            f"({start_time.period.value} - {start_time.minute_second}s'{start_time.additional_minute_second if start_time.additional_minute_second else 0})."
         )
     if finish_time is not None:
-        if event_time >= finish_time:
+        if event_time > finish_time:
             raise ValueError(
-                f"Tempo inválido: A timeline já foi encerrada aos {finish_time}s. "
-                f"Não é possível cadastrar um evento ocorrido aos {event_time}s."
+                f"Tempo inválido: A timeline já foi encerrada aos "
+                f"[{finish_time.period.value} - {finish_time.minute_second}s'{finish_time.additional_minute_second if finish_time.additional_minute_second else 0}]."
             )

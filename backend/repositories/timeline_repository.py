@@ -1,7 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models.match import Match
 from models.timeline import Timeline
 
 def create(timeline: Timeline, db: Session):

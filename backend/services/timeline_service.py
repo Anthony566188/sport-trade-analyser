@@ -34,7 +34,7 @@ def stop(id: int, match_period: MatchPeriod, minute_second_finished, additional_
 
         # Instancia o tempo do inicio da timeline
         initial_time = MatchTime(
-            period=timeline.match_period_started,
+            period=MatchPeriod(timeline.match_period_started),
             minute_second=timeline.minute_second_started,
             additional_minute_second=timeline.additional_minute_second_started or 0
         )
