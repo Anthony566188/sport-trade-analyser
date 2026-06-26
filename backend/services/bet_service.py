@@ -7,6 +7,7 @@ import repositories.bet_repository as repository
 import repositories.match_repository as match_repository
 from models.bet import Bet
 from models.enums.bet_type import BetType
+from models.enums.match_period import MatchPeriod
 from models.value_objects.match_time import MatchTime
 from schemas.bet_exit_request import BetExitRequest
 
@@ -45,19 +46,19 @@ def exit(id, exit_data: BetExitRequest, db) -> Bet:
 
     # Instancia os Objetos de Valor Temporais para comparação
     time_entry = MatchTime(
-        period=bet.entry_period,
+        period=MatchPeriod(bet.entry_period),
         minute_second=bet.entry_minute_second,
         additional_minute_second=bet.entry_additional_minute_second
     )
 
     time_exit = MatchTime(
-        period=exit_data.exit_period,
+        period=MatchPeriod(exit_data.exit_period),
         minute_second=exit_data.exit_minute_second,
         additional_minute_second=exit_data.exit_additional_minute_second
     )
 
     # Validação Cronológica
-    if time_entry < time_exit:
+    if time_entry > time_exit:
         raise ValueError(
             "Inconsistência temporal: O tempo de saída da aposta "
             "não pode ser anterior ao tempo de entrada."
