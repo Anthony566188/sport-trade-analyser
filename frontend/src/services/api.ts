@@ -10,38 +10,81 @@ export const api = axios.create({
 });
 
 /**
- * Normaliza o campo `detail` do FastAPI para uma string legível.
+ * Normaliza o campo `detail` do FastAPI ou exceções de rede para uma string legível.
  */
 function parseApiError(error: unknown): string {
-  // Sem resposta do servidor (timeout, rede, etc.)
+  // Sem resposta do servidor (timeout, falha de rede, CORS, etc.)
   if (!axios.isAxiosError(error) || !error.response) {
     return error instanceof Error ? error.message : 'Erro de conexão com o servidor.';
   }
 
-  const detail = error.response.data?.detail;
+  const data = error.response.data;
 
-  // Caso 1: detail é uma string simples
+  // Se a resposta for um texto simples (ex: erro 500 devolvendo HTML ou texto puro)
+  if (typeof data === 'string') {
+    return data;
+  }
+
+  // Fallback caso a data seja nula ou vazia
+  if (!data) {
+    return `Erro ${error.response.status}: ${error.response.statusText}`;
+  }
+
+  const detail = data.detail;
+
+  // Caso 1: detail é uma string simples (Erros de domínio capturados no Controller via HTTPException)
   if (typeof detail === 'string') {
     return detail;
   }
 
-  // Caso 2: detail é o array de erros do Pydantic
+  // Caso 2: detail é o array de erros do Pydantic (Validações estruturais e exceções de Schemas)
   if (Array.isArray(detail) && detail.length > 0) {
-    return detail
-      .map((d: { loc?: string[]; msg?: string }) => {
-        // Pega o último elemento de `loc` como contexto do campo (ex: "stake")
-        const field = d.loc?.at(-1);
-        const msg   = d.msg ?? 'Campo inválido';
-        return field ? `${field}: ${msg}` : msg;
-      })
-      .join(' | ');
+    try {
+      return detail
+        .map((d: any) => {
+          // Proteção caso o array de details contenha apenas strings
+          if (typeof d === 'string') return d;
+
+          let msg = d?.msg ?? 'Campo inválido';
+          
+          // O Pydantic adiciona o prefixo "Value error, " quando um @model_validator falha
+          if (typeof msg === 'string' && msg.startsWith('Value error, ')) {
+            msg = msg.replace('Value error, ', '');
+          }
+
+          // Substituímos o uso de .at(-1) por indexação segura para evitar TypeError em engines antigos
+          const locArray = Array.isArray(d?.loc) ? d.loc : [];
+          const field = locArray.length > 0 ? locArray[locArray.length - 1] : undefined;
+
+          // Se o erro for atrelado ao corpo inteiro da requisição (ex: validação cruzada), ignoramos o prefixo "body:"
+          if (field === 'body') {
+            return msg;
+          }
+
+          return field ? `${field}: ${msg}` : msg;
+        })
+        .join(' | ');
+    } catch (err) {
+      return 'Erro de validação nos dados enviados.';
+    }
   }
 
-  // Fallback
+  // Caso 3: detail é um objeto (Outros formatos de erro previstos por middlewares)
+  if (detail && typeof detail === 'object') {
+    if (typeof detail.message === 'string') return detail.message;
+    if (typeof detail.error === 'string') return detail.error;
+  }
+
+  // Caso 4: fallback para propriedade message no nível root da resposta
+  if (typeof data.message === 'string') {
+    return data.message;
+  }
+
+  // Fallback genérico final
   return `Erro ${error.response.status}: ${error.response.statusText}`;
 }
 
-// Interceptor de resposta: normaliza todos os erros da API
+// Interceptor de resposta: normaliza todos os erros da API transformando-os em Errors legíveis
 api.interceptors.response.use(
   (response) => response,
   (error) => Promise.reject(new Error(parseApiError(error))),
