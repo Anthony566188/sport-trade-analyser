@@ -31,8 +31,12 @@ export interface Match {
 export interface Timeline {
   id: number;
   id_match: number;
+  match_period_started: MatchPeriod;
   minute_second_started: number;
+  additional_minute_second_started: number | null;
+  match_period_finished: MatchPeriod | null;
   minute_second_finished: number | null;
+  additional_minute_second_finished: number | null;
 }
 
 // Enum estrito refletindo o backend
@@ -81,75 +85,109 @@ export const MATCH_PERIOD_LABELS: Record<MatchPeriod, string> = {
   [MatchPeriod.EXTRA_SECOND]: '2º Tempo Prorrogação',
 };
 
-// Reflete a classe TimelineEventRequest do Python
+// ─── Request DTOs (Payloads de Escrita Consolidados) ───────────────────────
+
+export interface TimelineRequestPayload {
+  id_match: number;
+  match_period_started: MatchPeriod;
+  minute_second_started: number;
+  additional_minute_second_started?: number;
+}
+
 export interface TimelineEventRequestPayload {
   id_criterion?: number | null;
   id_timeline: number;
-  id_bet?: number | null;
   event?: EventType | null;
+  match_period: MatchPeriod;
   minute_second: number;
-  additional_minute_second?: number | null;
-  description?: string | null;
+  additional_minute_second?: number;
   team: string;
 }
+
+export interface UpdateTimelineEventRequestPayload {
+  id_criterion?: number | null;
+  event?: EventType | null;
+  match_period: MatchPeriod;
+  minute_second: number;
+  additional_minute_second?: number;
+  team: string;
+}
+
+export interface BetRequestPayload {
+  id_method: number;
+  id_match: number;
+  stake: number;
+  entry_odd: number;
+  type: BetType;
+  entry_period: MatchPeriod;
+  entry_minute_second: number;
+  entry_additional_minute_second?: number;
+}
+
+export interface UpdateBetRequestPayload {
+  id_method: number;
+  id_match: number;
+  stake: number;
+  entry_odd: number;
+  type: BetType;
+  exit_odd?: number | null;
+  entry_period: MatchPeriod;
+  entry_minute_second: number;
+  entry_additional_minute_second?: number;
+  exit_period?: MatchPeriod | null;
+  exit_minute_second?: number | null;
+  exit_additional_minute_second?: number;
+}
+
+export interface BetExitRequestPayload {
+  exit_odd: number;
+  exit_period: MatchPeriod;
+  exit_minute_second: number;
+  exit_additional_minute_second?: number;
+}
+
+// ─── Entities ───────────────────────────────────────────────────────────────
 
 export interface TimelineEvent {
   id: number;
   id_timeline: number;
   id_criterion: number | null;
-  id_bet: number | null;
+  id_bet?: number | null; // Opcional por legado até total remoção na UI
   event: EventType | null;
+  match_period: MatchPeriod;
   minute_second: number;
   additional_minute_second: number | null;
   team: string;
 }
 
-/** Criterion entity */
 export interface Criterion {
   id: number;
   title: string;
   description?: string;
 }
 
-/** Method entity */
 export interface Method {
   id: number;
   name: string;
 }
 
-/** Bet entity — espelha o retorno do backend */
 export type BetType = 'BACK' | 'LAY';
-
-// Reflete a classe BetRequest do Python
-export interface BetRequestPayload {
-  id_method: number;
-  stake: number;
-  entry_odd: number;
-  type: BetType;
-}
 
 export interface Bet {
   id: number;
   id_method: number;
+  id_match: number;
   stake: number;
   entry_odd: number;
   exit_odd: number | null;
   type: BetType;
-  date: string;
   profit_in_money: number | null;
-  exit_minute_second?: number | null;           
-  exit_additional_minute_second?: number | null;
-}
-
-// Reflete a classe UpdateBetRequest do Python
-export interface UpdateBetRequestPayload {
-  id_method: number;
-  stake: number;
-  entry_odd: number;
-  type: BetType;
-  exit_odd?: number | null;
-  exit_minute_second?: number | null;          
-  exit_additional_minute_second?: number | null;
+  entry_period: MatchPeriod;
+  entry_minute_second: number;
+  entry_additional_minute_second: number;
+  exit_period: MatchPeriod | null;
+  exit_minute_second: number | null;
+  exit_additional_minute_second: number;
 }
 
 // ─── API / UI Helpers ────────────────────────────────────────────────────────
@@ -158,8 +196,5 @@ export interface ApiError {
   detail: string;
 }
 
-/** Shape returned by the team search endpoint */
 export type TeamSearchResult = Team[];
-
-/** Theme mode */
 export type ThemeMode = 'light' | 'dark';

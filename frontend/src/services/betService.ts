@@ -1,5 +1,10 @@
 import api from './api';
-import type { BetRequestPayload, UpdateBetRequestPayload, Bet } from '../types';
+import type { 
+  BetRequestPayload, 
+  UpdateBetRequestPayload, 
+  BetExitRequestPayload,
+  Bet 
+} from '../types';
 
 export const betService = {
   /**
@@ -21,7 +26,7 @@ export const betService = {
   },
 
   /**
-   * Atualiza os dados de uma aposta existente.
+   * Atualiza os dados de uma aposta existente (trinca completa).
    * PUT /bet/{id}
    */
   update: async (id: number, payload: UpdateBetRequestPayload): Promise<Bet> => {
@@ -30,7 +35,7 @@ export const betService = {
   },
 
   /**
-   * Deleta uma aposta e propaga exclusão em cascata (eventos).
+   * Deleta uma aposta.
    * DELETE /bet/{id}
    */
   delete: async (id: number): Promise<void> => {
@@ -39,15 +44,10 @@ export const betService = {
 
   /**
    * Realiza o Cashout (encerra a aposta).
-   * PUT /bet/{id}/exit/{exit_odd}?exit_minute_second=X&exit_additional_minute_second=Y
+   * PUT /bet/{id}/exit
    */
-  exit: async (id: number, exitOdd: number, exitMinuteSecond: number, exitAdditionalMinuteSecond: number | null = null): Promise<Bet> => {
-    const { data } = await api.put<Bet>(`/bet/${id}/exit/${exitOdd}`, null, {
-      params: {
-        exit_minute_second: exitMinuteSecond,
-        exit_additional_minute_second: exitAdditionalMinuteSecond
-      }
-    });
+  exit: async (id: number, payload: BetExitRequestPayload): Promise<Bet> => {
+    const { data } = await api.put<Bet>(`/bet/${id}/exit`, payload);
     return data;
   },
 };

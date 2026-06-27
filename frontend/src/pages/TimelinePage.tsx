@@ -12,11 +12,16 @@ import { CreateTimelinePainel } from '../components/timeline/CreateTimelinePaine
 import { useChronometer } from '../hooks/useChronometer'
 import { secondsToDisplay } from '../utils/time'
 import { cn } from '../utils/cn'
+import {
+  MatchPeriod,
+  EVENT_TYPE_LABELS
+} from '../types'
 import type {
   Match, Timeline, TimelineEvent, EventType,
-  Criterion, Method, BetType, Bet, UpdateBetRequestPayload
+  Criterion, Method, BetType, Bet, 
+  UpdateBetRequestPayload, BetRequestPayload, BetExitRequestPayload,
+  TimelineRequestPayload, TimelineEventRequestPayload
 } from '../types'
-import { EVENT_TYPE_LABELS } from '../types'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -94,7 +99,6 @@ export const TimelinePage: React.FC = () => {
         setTimeline(tl)
 
         if (tl) {
-          // Recuperamos o estado inserido durante a navegação. Fallback (?? false) garante o fluxo normal.
           const locationState = location.state as { autoStartTimeline?: boolean } | null
           const autoStart = locationState?.autoStartTimeline ?? false
           
@@ -111,8 +115,7 @@ export const TimelinePage: React.FC = () => {
           setCriteria(crRes.data)
           setMethods(mtRes.data)
 
-          // Extrai e carrega os detalhes das apostas amarradas aos eventos
-          const betIds = fetchedEvents.map(e => e.id_bet).filter((id): id is number => id !== null)
+          const betIds = fetchedEvents.map(e => e.id_bet).filter((id): id is number => id != null)
           if (betIds.length > 0) {
             const betsData = await Promise.all(betIds.map(id => betService.getById(id).catch(() => null)))
             const newBets: Record<number, Bet> = {}
@@ -140,10 +143,14 @@ export const TimelinePage: React.FC = () => {
 
   // ── Criar timeline (separado da partida) ──────────────────────────────────
   const handleCreateTimeline = useCallback(async (startSeconds: number) => {
-    const { data: tl } = await api.post<Timeline>('/timeline', {
-      id_match:              matchId,
+    const payload: TimelineRequestPayload = {
+      id_match: matchId,
+      match_period_started: MatchPeriod.FIRST_HALF, // Placeholder
       minute_second_started: startSeconds,
-    })
+      additional_minute_second_started: 0
+    }
+
+    const { data: tl } = await api.post<Timeline>('/timeline', payload)
     setTimeline(tl)
     chronometer.initialize(startSeconds, true)
 
@@ -158,7 +165,11 @@ export const TimelinePage: React.FC = () => {
     if (!timeline || !confirm('Encerrar a timeline? Esta ação não pode ser desfeita.')) return
     try {
       await api.put(`/timeline/stop/${timeline.id}`, null, {
-        params: { minute_second_finished: chronometer.elapsed },
+        params: { 
+          match_period: MatchPeriod.SECOND_HALF, // Placeholder (UX Pendente)
+          minute_second_finished: chronometer.elapsed,
+          additional_minute_second_finished: 0 
+        },
       })
       chronometer.pause()
       setTimeline(prev => prev
@@ -185,13 +196,14 @@ export const TimelinePage: React.FC = () => {
   // ── Registrar evento / critério / aposta ──────────────────────────────────
   const handleAddEvent = async () => {
     if (!timeline) return
-    if (!selTeam)  { setPanelError('Selecione o time.'); return }
+    if (!selTeam && eventMode !== 'bet')  { setPanelError('Selecione o time.'); return }
 
     setAddingEvt(true)
     setPanelError(null)
 
     const minuteSecond = Math.min(chronometer.elapsed, 2700)
     const additionalMinuteSecond = chronometer.elapsed > 2700 ? chronometer.elapsed - 2700 : null
+    const currentPeriod = MatchPeriod.FIRST_HALF // Placeholder para uso no novo backend (até os seletores UX existirem)
 
     try {
       let newEvent: TimelineEvent | null = null
@@ -201,55 +213,52 @@ export const TimelinePage: React.FC = () => {
         if (!betStake || Number(betStake) <= 0)       { setPanelError('Informe um stake válido.'); return }
         if (!betEntryOdd || Number(betEntryOdd) <= 1) { setPanelError('Informe uma odd válida (> 1).'); return }
 
-        // Cria aposta
-        const bet = await betService.create({
+        const betPayload: BetRequestPayload = {
           id_method:  Number(betMethodId),
+          id_match:   matchId,
           stake:      Number(betStake),
           entry_odd:  Number(betEntryOdd),
           type:       betType,
-        })
+          entry_period: currentPeriod,
+          entry_minute_second: minuteSecond,
+          entry_additional_minute_second: additionalMinuteSecond ?? 0,
+        }
         
-        // Mantém a aposta em cache
+        const bet = await betService.create(betPayload)
         setBets(prev => ({ ...prev, [bet.id]: bet }))
-
-        // Vincula na timeline
-        const { data } = await api.post<TimelineEvent>('/timeline-event', {
-          id_timeline:              timeline.id,
-          id_bet:                   bet.id,
-          id_criterion:             null,
-          event:                    null,
-          minute_second:            minuteSecond,
-          additional_minute_second: additionalMinuteSecond,
-          team:                     selTeam,
-        })
-        newEvent = data
+        
+        // NOTA ARQUITETURAL: A criação do evento de timeline vinculado foi removida para adequar à restrição do novo backend. 
 
       } else if (eventMode === 'event') {
         if (!selEvent) { setPanelError('Selecione o tipo de evento.'); return }
 
-        const { data } = await api.post<TimelineEvent>('/timeline-event', {
-          id_timeline:              timeline.id,
-          event:                    selEvent,
-          id_criterion:             null,
-          id_bet:                   null,
-          minute_second:            minuteSecond,
-          additional_minute_second: additionalMinuteSecond,
-          team:                     selTeam,
-        })
+        const eventPayload: TimelineEventRequestPayload = {
+          id_timeline: timeline.id,
+          event: selEvent,
+          id_criterion: null,
+          match_period: currentPeriod,
+          minute_second: minuteSecond,
+          additional_minute_second: additionalMinuteSecond ?? 0,
+          team: selTeam,
+        }
+
+        const { data } = await api.post<TimelineEvent>('/timeline-event', eventPayload)
         newEvent = data
 
       } else if (eventMode === 'criterion') {
         if (!selCrit) { setPanelError('Selecione um critério.'); return }
 
-        const { data } = await api.post<TimelineEvent>('/timeline-event', {
-          id_timeline:              timeline.id,
-          id_criterion:             selCrit,
-          event:                    null,
-          id_bet:                   null,
-          minute_second:            minuteSecond,
-          additional_minute_second: additionalMinuteSecond,
-          team:                     selTeam,
-        })
+        const criterionPayload: TimelineEventRequestPayload = {
+          id_timeline: timeline.id,
+          id_criterion: selCrit,
+          event: null,
+          match_period: currentPeriod,
+          minute_second: minuteSecond,
+          additional_minute_second: additionalMinuteSecond ?? 0,
+          team: selTeam,
+        }
+
+        const { data } = await api.post<TimelineEvent>('/timeline-event', criterionPayload)
         newEvent = data
       }
 
@@ -272,7 +281,6 @@ export const TimelinePage: React.FC = () => {
 
     try {
       if (evt.id_bet) {
-        // Se for aposta, o backend realiza o CASCADE e exclui a timeline-event automaticamente.
         await betService.delete(evt.id_bet)
         setBets(prev => {
           const next = { ...prev }
@@ -282,7 +290,6 @@ export const TimelinePage: React.FC = () => {
       } else {
         await api.delete(`/timeline-event/${evtId}`)
       }
-      // Remove do feed visual
       setEvents(prev => prev.filter(e => e.id !== evtId))
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Erro ao remover.')
@@ -308,12 +315,17 @@ export const TimelinePage: React.FC = () => {
     try {
       const payload: UpdateBetRequestPayload = {
         id_method: Number(editBetData.id_method),
+        id_match: matchId,
         stake: Number(editBetData.stake),
         entry_odd: Number(editBetData.entry_odd),
         type: editBetData.type,
         exit_odd: editBetData.exit_odd ? Number(editBetData.exit_odd) : null,
-        exit_minute_second: editBetData.exit_minute_second,
-        exit_additional_minute_second: editBetData.exit_additional_minute_second
+        entry_period: editingBet.entry_period || MatchPeriod.FIRST_HALF,
+        entry_minute_second: editingBet.entry_minute_second || 0,
+        entry_additional_minute_second: editingBet.entry_additional_minute_second || 0,
+        exit_period: editingBet.exit_period ?? null,
+        exit_minute_second: editBetData.exit_minute_second ?? null,
+        exit_additional_minute_second: editBetData.exit_additional_minute_second ?? 0
       }
       const updated = await betService.update(editingBet.id, payload)
       setBets(prev => ({ ...prev, [updated.id]: updated }))
@@ -335,12 +347,18 @@ export const TimelinePage: React.FC = () => {
       const odd = Number(cashoutOddValue)
       if (odd <= 1) { alert('Odd deve ser maior que 1'); return }
 
-      // Extrai o tempo da timeline no momento do clique
       const elapsed = chronometer.elapsed
       const minuteSecond = Math.min(elapsed, 2700)
       const additional = elapsed > 2700 ? elapsed - 2700 : null
 
-      const updated = await betService.exit(cashoutBet.id, odd, minuteSecond, additional)
+      const payload: BetExitRequestPayload = {
+        exit_odd: odd,
+        exit_period: MatchPeriod.FIRST_HALF, // Placeholder (UX Pendente)
+        exit_minute_second: minuteSecond,
+        exit_additional_minute_second: additional ?? 0
+      }
+
+      const updated = await betService.exit(cashoutBet.id, payload)
       setBets(prev => ({ ...prev, [updated.id]: updated }))
       setCashoutBet(null)
     } catch (e) {
@@ -490,19 +508,21 @@ export const TimelinePage: React.FC = () => {
               </div>
 
               {/* Seleção de Time */}
-              <div>
-                <label className="field-label" htmlFor="sel-team">Time</label>
-                <select
-                  id="sel-team"
-                  value={selTeam}
-                  onChange={e => setSelTeam(e.target.value)}
-                  className="field-select"
-                >
-                  <option value="">Selecione...</option>
-                  <option value={match.team_home}>{match.team_home}</option>
-                  <option value={match.team_away}>{match.team_away}</option>
-                </select>
-              </div>
+              {eventMode !== 'bet' && (
+                <div>
+                  <label className="field-label" htmlFor="sel-team">Time</label>
+                  <select
+                    id="sel-team"
+                    value={selTeam}
+                    onChange={e => setSelTeam(e.target.value)}
+                    className="field-select"
+                  >
+                    <option value="">Selecione...</option>
+                    <option value={match.team_home}>{match.team_home}</option>
+                    <option value={match.team_away}>{match.team_away}</option>
+                  </select>
+                </div>
+              )}
 
               {/* Modo Evento */}
               {eventMode === 'event' && (

@@ -10,7 +10,8 @@ import { TeamSearchInput } from '../components/team/TeamSearchInput'
 import { Spinner } from '../components/ui/Spinner'
 import { minSecToSeconds } from '../utils/time'
 import { cn } from '../utils/cn'
-import type { Team, Championship } from '../types'
+import { MatchPeriod } from '../types'
+import type { Team, Championship, TimelineRequestPayload } from '../types'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -100,13 +101,16 @@ export const NewMatchPage: React.FC = () => {
         is_neutral_field: isNeutralField,
       })
 
-// 2. Cria a timeline (OPCIONAL) — só se o usuário optou por isso
+      // 2. Cria a timeline (OPCIONAL) — só se o usuário optou por isso
       if (createTimeline) {
         const initialSeconds = minSecToSeconds(tlMinutes, tlSeconds)
-        await api.post('/timeline', {
-          id_match:              match.id,
+        const payload: TimelineRequestPayload = {
+          id_match: match.id,
+          match_period_started: MatchPeriod.FIRST_HALF, // Placeholder (Task de UX futura)
           minute_second_started: initialSeconds,
-        })
+          additional_minute_second_started: 0
+        }
+        await api.post('/timeline', payload)
       }
 
       setSuccess(true)
