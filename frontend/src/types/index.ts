@@ -63,6 +63,24 @@ export const EVENT_TYPE_LABELS: Record<EventType, string> = {
   [EventType.PENALTY]:            'Pênalti',
 };
 
+// Enum estrito refletindo o backend (MatchPeriod)
+export enum MatchPeriod {
+  FIRST_HALF = '1H',
+  HALF_TIME = 'HT',
+  SECOND_HALF = '2H',
+  EXTRA_FIRST = 'E1',
+  EXTRA_SECOND = 'E2',
+}
+
+// Record de mapeamento para a UI (Tradução amigável)
+export const MATCH_PERIOD_LABELS: Record<MatchPeriod, string> = {
+  [MatchPeriod.FIRST_HALF]: '1º Tempo',
+  [MatchPeriod.HALF_TIME]: 'Intervalo',
+  [MatchPeriod.SECOND_HALF]: '2º Tempo',
+  [MatchPeriod.EXTRA_FIRST]: '1º Tempo Prorrogação',
+  [MatchPeriod.EXTRA_SECOND]: '2º Tempo Prorrogação',
+};
+
 // Reflete a classe TimelineEventRequest do Python
 export interface TimelineEventRequestPayload {
   id_criterion?: number | null;
