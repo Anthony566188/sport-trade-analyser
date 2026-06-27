@@ -152,7 +152,6 @@ export interface TimelineEvent {
   id: number;
   id_timeline: number;
   id_criterion: number | null;
-  id_bet?: number | null; // Opcional por legado até total remoção na UI
   event: EventType | null;
   match_period: MatchPeriod;
   minute_second: number;
@@ -181,13 +180,17 @@ export interface Bet {
   entry_odd: number;
   exit_odd: number | null;
   type: BetType;
-  profit_in_money: number | null;
+  date: string; 
+  
+  // Trinca de Entrada
   entry_period: MatchPeriod;
   entry_minute_second: number;
-  entry_additional_minute_second: number;
+  entry_additional_minute_second: number | null; 
+  
+  // Trinca de Saída
   exit_period: MatchPeriod | null;
   exit_minute_second: number | null;
-  exit_additional_minute_second: number;
+  exit_additional_minute_second: number | null;
 }
 
 // ─── API / UI Helpers ────────────────────────────────────────────────────────
