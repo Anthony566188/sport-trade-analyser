@@ -17,6 +17,8 @@ import { Spinner } from '../components/ui/Spinner'
 import { TimelineControls } from '../components/timeline/TimelineControls'
 import { CreateTimelinePainel } from '../components/timeline/CreateTimelinePainel'
 import { useChronometer } from '../hooks/useChronometer'
+import { useTimelineSort } from '../hooks/useTimelineSort'
+import type { UnifiedTimelineItem } from '../hooks/useTimelineSort'
 import { secondsToDisplay, matchTimeToDisplay } from '../utils/time'
 import { cn } from '../utils/cn'
 import {
@@ -91,6 +93,8 @@ export const TimelinePage: React.FC = () => {
   // ── Aposta (Cashout) ──
   const [cashoutBet,      setCashoutBet]      = useState<Bet | null>(null)
   const [cashoutOddValue, setCashoutOddValue] = useState('')
+
+  const sortedItems = useTimelineSort(events, Object.values(bets))
 
   // ── Carga inicial ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -275,24 +279,26 @@ export const TimelinePage: React.FC = () => {
 
   // ── Deletar evento / aposta ───────────────────────────────────────────────
   const handleDeleteEvent = async (evtId: number) => {
-    const evt = events.find(e => e.id === evtId)
-    if (!evt) return
-    if (!confirm('Remover este registro? Esta ação não pode ser desfeita.')) return
-
+    if (!confirm('Remover este evento? Esta ação não pode ser desfeita.')) return
     try {
-      if (evt.id_bet) {
-        await betService.delete(evt.id_bet)
-        setBets(prev => {
-          const next = { ...prev }
-          delete next[evt.id_bet!]
-          return next
-        })
-      } else {
-        await timelineEventService.delete(evtId)
-      }
+      await timelineEventService.delete(evtId)
       setEvents(prev => prev.filter(e => e.id !== evtId))
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao remover.')
+     alert(e instanceof Error ? e.message : 'Erro ao remover evento.')
+    }
+  }
+
+  const handleDeleteBet = async (betId: number) => {
+    if (!confirm('Remover esta aposta? Esta ação não pode ser desfeita.')) return
+    try {
+      await betService.delete(betId)
+      setBets(prev => {
+        const next = { ...prev }
+        delete next[betId]
+        return next
+      })
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Erro ao remover aposta.')
     }
   }
 
@@ -367,22 +373,27 @@ export const TimelinePage: React.FC = () => {
   }
 
   // ── Labels do feed ────────────────────────────────────────────────────────
-  const getEventLabel = (evt: TimelineEvent): string => {
-    if (evt.event)        return EVENT_TYPE_LABELS[evt.event]
-    if (evt.id_criterion) return criteria.find(c => c.id === evt.id_criterion)?.title ?? 'Critério'
-    if (evt.id_bet) {
-      const b = bets[evt.id_bet]
-      const method = methods.find(m => m.id === b?.id_method)
-      return method ? `Aposta: ${method.name}` : `Aposta #${evt.id_bet}`
+  const getItemLabel = (item: UnifiedTimelineItem): string => {
+    if (item.type === 'EVENT') {
+      const evt = item.payload
+      if (evt.event)        return EVENT_TYPE_LABELS[evt.event]
+      if (evt.id_criterion) return criteria.find(c => c.id === evt.id_criterion)?.title ?? 'Critério'
+      return 'Evento'
+    } else {
+      const b = item.payload
+      const method = methods.find(m => m.id === b.id_method)
+      return method ? `Aposta: ${method.name}` : `Aposta #${b.id}`
     }
-    return 'Evento'
   }
 
-  const getEventIcon = (evt: TimelineEvent): string => {
-    if (evt.event)        return EVENT_ICONS[evt.event] ?? '📌'
-    if (evt.id_criterion) return '🎯'
-    if (evt.id_bet)       return '💵'
-    return '📌'
+  const getItemIcon = (item: UnifiedTimelineItem): string => {
+    if (item.type === 'EVENT') {
+      const evt = item.payload
+      if (evt.event)        return EVENT_ICONS[evt.event] ?? '📌'
+      if (evt.id_criterion) return '🎯'
+      return '📌'
+    }
+    return '💵'
   }
 
   // ── Render states ─────────────────────────────────────────────────────────
@@ -671,32 +682,34 @@ export const TimelinePage: React.FC = () => {
       )}
 
       {/* ── Feed de eventos ── */}
-      {events.length > 0 ? (
+      {sortedItems.length > 0 ? (
         <ul className="space-y-3" aria-label="Eventos da timeline">
-          {events.map(evt => {
-            const betInfo = evt.id_bet ? bets[evt.id_bet] : null
+          {sortedItems.map(item => {
+            const isEvent = item.type === 'EVENT'
+            const evt = isEvent ? item.payload as TimelineEvent : null
+            const betInfo = !isEvent ? item.payload as Bet : null
 
             return (
               <li
-                key={evt.id}
+                key={item.sortId}
                 className="group flex flex-col sm:flex-row items-start sm:items-center gap-3 py-3 px-4 rounded-xl border border-turf-100 dark:border-turf-800 bg-white dark:bg-turf-800/40 hover:border-turf-200 dark:hover:border-turf-700 transition-colors"
               >
                 <span className="font-mono text-[10px] sm:text-xs text-turf-400 dark:text-turf-500 min-w-[120px] shrink-0">
                   {matchTimeToDisplay({
-                    period: evt.match_period,
-                    minute_second: evt.minute_second,
-                    additional_minute_second: evt.additional_minute_second
+                    period: item.period,
+                    minute_second: item.minute,
+                    additional_minute_second: item.additional
 
                   })}
                 </span>
                 
-                <span className="text-lg shrink-0 hidden sm:block" aria-hidden>{getEventIcon(evt)}</span>
-                
+                <span className="text-lg shrink-0 hidden sm:block" aria-hidden>{getItemIcon(item)}</span>
+
                 <div className="flex-1 min-w-0 w-full">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-turf-900 dark:text-turf-100 flex items-center gap-2">
-                      <span className="sm:hidden">{getEventIcon(evt)}</span>
-                      {getEventLabel(evt)}
+                      <span className="sm:hidden">{getItemIcon(item)}</span>
+                      {getItemLabel(item)}
                       {betInfo && (
                         <span className={cn(
                           "text-[10px] px-1.5 py-0.5 rounded font-bold uppercase",
@@ -721,14 +734,21 @@ export const TimelinePage: React.FC = () => {
                           <Edit2 className="w-4 h-4" />
                         </button>
                       )}
-                      <button onClick={() => handleDeleteEvent(evt.id)} title="Remover" className="p-1 text-turf-400 hover:text-red-500 transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {evt && (
+                        <button onClick={() => handleDeleteEvent(evt.id)} title="Remover Evento" className="p-1 text-turf-400 hover:text-red-500 transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      {betInfo && (
+                        <button onClick={() => handleDeleteBet(betInfo.id)} title="Remover Aposta" className="p-1 text-turf-400 hover:text-red-500 transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
-                  <p className="text-xs text-turf-400 dark:text-turf-500 mb-1">{evt.team}</p>
-
+                  {evt && <p className="text-xs text-turf-400 dark:text-turf-500 mb-1">{evt.team}</p>}
+                  
                   {/* Detalhes se for uma Aposta */}
                   {betInfo && (
                     <div className="mt-2 text-xs grid grid-cols-2 sm:flex sm:gap-6 gap-2 text-turf-600 dark:text-turf-400 bg-turf-50 dark:bg-turf-900/30 p-2 rounded-lg border border-turf-100 dark:border-turf-800">
