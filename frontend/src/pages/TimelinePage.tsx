@@ -125,13 +125,14 @@ export const TimelinePage: React.FC = () => {
           setCriteria(criteriaData)
           setMethods(methodsData)
 
-          const betIds = fetchedEvents.map(e => e.id_bet).filter((id): id is number => id != null)
-          if (betIds.length > 0) {
-            const betsData = await Promise.all(betIds.map(id => betService.getById(id).catch(() => null)))
-            const newBets: Record<number, Bet> = {}
-            betsData.forEach(b => { if (b) newBets[b.id] = b })
-            setBets(newBets)
-          }
+          // Se o backend retornar o array de apostas embutido na timeline (ex: tl.bets) ou na match (match.bets)
+          // Nós populamos o cache local diretamente a partir dele de forma segura:
+          const timelineBets: Bet[] = (tl as any).bets || (matchData as any).bets || [];
+          const newBets: Record<number, Bet> = {};
+          timelineBets.forEach(b => { newBets[b.id] = b });
+          setBets(newBets);
+
+        
 
         } else {
           const [criteriaData, methodsData] = await Promise.all([
