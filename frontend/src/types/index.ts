@@ -146,6 +146,26 @@ export interface BetExitRequestPayload {
   exit_additional_minute_second?: number;
 }
 
+export interface MatchRequestPayload {
+  team_home: string;
+  team_away: string;
+  home_goals: number;
+  away_goals: number;
+  championship: string | null;
+  date: string;
+  is_neutral_field: boolean;
+  is_friendly: boolean;
+}
+
+export interface CriterionRequestPayload {
+  title: string;
+  description?: string;
+}
+
+export interface MethodRequestPayload {
+  name: string;
+}
+
 // ─── Entities ───────────────────────────────────────────────────────────────
 
 export interface TimelineEvent {

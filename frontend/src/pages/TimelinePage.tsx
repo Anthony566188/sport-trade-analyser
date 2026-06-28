@@ -4,8 +4,15 @@ import {
   ArrowLeft, Plus, Zap, Target,
   Layers, Trash2, AlertCircle, CheckCircle, Edit2
 } from 'lucide-react'
-import api from '../services/api'
+
+// Serviços extraídos
 import { betService } from '../services/betService'
+import { timelineService } from '../services/timelineService'
+import { timelineEventService } from '../services/timelineEventService'
+import { matchService } from '../services/matchService'
+import { criterionService } from '../services/criterionService'
+import { methodService } from '../services/methodService'
+
 import { Spinner } from '../components/ui/Spinner'
 import { TimelineControls } from '../components/timeline/TimelineControls'
 import { CreateTimelinePainel } from '../components/timeline/CreateTimelinePainel'
@@ -89,13 +96,13 @@ export const TimelinePage: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [mRes, tRes] = await Promise.all([
-          api.get<Match>(`/matches/${matchId}`),
-          api.get<Timeline>(`/timeline/match/${matchId}`).catch(() => null),
+        const [matchData, tlData] = await Promise.all([
+          matchService.getById(matchId),
+          timelineService.getByMatchId(matchId).catch(() => null),
         ])
-        setMatch(mRes.data)
+        setMatch(matchData)
 
-        const tl = tRes?.data ?? null
+        const tl = tlData ?? null
         setTimeline(tl)
 
         if (tl) {
@@ -104,16 +111,15 @@ export const TimelinePage: React.FC = () => {
           
           chronometer.initialize(tl.minute_second_started, autoStart)
           
-          const [evRes, crRes, mtRes] = await Promise.all([
-            api.get<TimelineEvent[]>(`/timeline-event/timeline/${tl.id}`),
-            api.get<Criterion[]>('/criterion'),
-            api.get<Method[]>('/method'),
+          const [fetchedEvents, criteriaData, methodsData] = await Promise.all([
+            timelineEventService.getByTimelineId(tl.id),
+            criterionService.getAll(),
+            methodService.getAll(),
           ])
           
-          const fetchedEvents = evRes.data
           setEvents(fetchedEvents)
-          setCriteria(crRes.data)
-          setMethods(mtRes.data)
+          setCriteria(criteriaData)
+          setMethods(methodsData)
 
           const betIds = fetchedEvents.map(e => e.id_bet).filter((id): id is number => id != null)
           if (betIds.length > 0) {
@@ -124,12 +130,12 @@ export const TimelinePage: React.FC = () => {
           }
 
         } else {
-          const [crRes, mtRes] = await Promise.all([
-            api.get<Criterion[]>('/criterion'),
-            api.get<Method[]>('/method'),
+          const [criteriaData, methodsData] = await Promise.all([
+            criterionService.getAll(),
+            methodService.getAll(),
           ])
-          setCriteria(crRes.data)
-          setMethods(mtRes.data)
+          setCriteria(criteriaData)
+          setMethods(methodsData)
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Erro ao carregar timeline.')
@@ -150,26 +156,22 @@ export const TimelinePage: React.FC = () => {
       additional_minute_second_started: 0
     }
 
-    const { data: tl } = await api.post<Timeline>('/timeline', payload)
+    const tl = await timelineService.create(payload)
     setTimeline(tl)
     chronometer.initialize(startSeconds, true)
 
-    const [evRes] = await Promise.all([
-      api.get<TimelineEvent[]>(`/timeline-event/timeline/${tl.id}`),
-    ])
-    setEvents(evRes.data)
+    const fetchedEvents = await timelineEventService.getByTimelineId(tl.id)
+    setEvents(fetchedEvents)
   }, [matchId, chronometer])
 
   // ── Encerrar timeline ─────────────────────────────────────────────────────
   const handleStopTimeline = useCallback(async () => {
     if (!timeline || !confirm('Encerrar a timeline? Esta ação não pode ser desfeita.')) return
     try {
-      await api.put(`/timeline/stop/${timeline.id}`, null, {
-        params: { 
-          match_period: MatchPeriod.SECOND_HALF, // Placeholder (UX Pendente)
-          minute_second_finished: chronometer.elapsed,
-          additional_minute_second_finished: 0 
-        },
+      await timelineService.stop(timeline.id, {
+        match_period: MatchPeriod.SECOND_HALF, // Placeholder (UX Pendente)
+        minute_second_finished: chronometer.elapsed,
+        additional_minute_second_finished: 0 
       })
       chronometer.pause()
       setTimeline(prev => prev
@@ -242,8 +244,7 @@ export const TimelinePage: React.FC = () => {
           team: selTeam,
         }
 
-        const { data } = await api.post<TimelineEvent>('/timeline-event', eventPayload)
-        newEvent = data
+        newEvent = await timelineEventService.create(eventPayload)
 
       } else if (eventMode === 'criterion') {
         if (!selCrit) { setPanelError('Selecione um critério.'); return }
@@ -258,8 +259,7 @@ export const TimelinePage: React.FC = () => {
           team: selTeam,
         }
 
-        const { data } = await api.post<TimelineEvent>('/timeline-event', criterionPayload)
-        newEvent = data
+        newEvent = await timelineEventService.create(criterionPayload)
       }
 
       if (newEvent) setEvents(prev => [newEvent!, ...prev])
@@ -288,7 +288,7 @@ export const TimelinePage: React.FC = () => {
           return next
         })
       } else {
-        await api.delete(`/timeline-event/${evtId}`)
+        await timelineEventService.delete(evtId)
       }
       setEvents(prev => prev.filter(e => e.id !== evtId))
     } catch (e) {
