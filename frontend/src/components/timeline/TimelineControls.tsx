@@ -4,7 +4,7 @@ import {
   StopCircle, Edit2, Check, X,
 } from 'lucide-react'
 import { cn } from '../../utils/cn'
-import { secondsToDisplay, displayToSeconds } from '../../utils/time'
+import { secondsToDisplay, displayToSeconds, formatMinutesSeconds } from '../../utils/time'
 import type { ChronometerStatus } from '../../hooks/useChronometer'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -164,7 +164,7 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
             <button
               onClick={() => {
                 if (!disabled && !isIdle) {
-                  setEditValue(secondsToDisplay(elapsed)) // Captura o tempo EXATO do clique
+                  setEditValue(formatMinutesSeconds(elapsed)) // Captura o tempo EXATO do clique
                   setEditing(true)
                 }
               }}
@@ -172,7 +172,7 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
               aria-label="Clique para editar o tempo manualmente"
               title={(!disabled && !isIdle) ? 'Clique para editar' : undefined}
               className={cn(
-                'font-mono text-3xl font-bold tracking-tight transition-colors',
+                'font-mono text-xl sm:text-2xl font-bold tracking-tight transition-colors',
                 isRunning
                   ? 'text-turf-900 dark:text-turf-100'
                   : isPaused

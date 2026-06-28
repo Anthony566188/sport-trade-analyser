@@ -17,7 +17,7 @@ import { Spinner } from '../components/ui/Spinner'
 import { TimelineControls } from '../components/timeline/TimelineControls'
 import { CreateTimelinePainel } from '../components/timeline/CreateTimelinePainel'
 import { useChronometer } from '../hooks/useChronometer'
-import { secondsToDisplay } from '../utils/time'
+import { secondsToDisplay, matchTimeToDisplay } from '../utils/time'
 import { cn } from '../utils/cn'
 import {
   MatchPeriod,
@@ -438,7 +438,7 @@ export const TimelinePage: React.FC = () => {
           'rounded-2xl p-5 flex items-center gap-4 border',
           'bg-turf-50 dark:bg-turf-800/40 border-turf-200 dark:border-turf-700',
         )}>
-          <span className="font-mono text-3xl font-bold text-turf-500 dark:text-turf-400 tracking-tight">
+          <span className="font-mono text-xl sm:text-2xl font-bold text-turf-500 dark:text-turf-400 tracking-tight">
             {secondsToDisplay(chronometer.elapsed)}
           </span>
           <span className="badge bg-turf-200 dark:bg-turf-700 text-turf-500 dark:text-turf-400">
@@ -681,8 +681,13 @@ export const TimelinePage: React.FC = () => {
                 key={evt.id}
                 className="group flex flex-col sm:flex-row items-start sm:items-center gap-3 py-3 px-4 rounded-xl border border-turf-100 dark:border-turf-800 bg-white dark:bg-turf-800/40 hover:border-turf-200 dark:hover:border-turf-700 transition-colors"
               >
-                <span className="font-mono text-xs text-turf-400 dark:text-turf-500 w-12 shrink-0">
-                  {secondsToDisplay(evt.minute_second + (evt.additional_minute_second ?? 0))}
+                <span className="font-mono text-[10px] sm:text-xs text-turf-400 dark:text-turf-500 min-w-[120px] shrink-0">
+                  {matchTimeToDisplay({
+                    period: evt.match_period,
+                    minute_second: evt.minute_second,
+                    additional_minute_second: evt.additional_minute_second
+
+                  })}
                 </span>
                 
                 <span className="text-lg shrink-0 hidden sm:block" aria-hidden>{getEventIcon(evt)}</span>
@@ -734,8 +739,12 @@ export const TimelinePage: React.FC = () => {
                           <div><span className="font-semibold block text-turf-400 text-[10px] uppercase">Odd Out</span>{betInfo.exit_odd}</div>
 
                           {/* EXIBINDO O MOMENTO DA SAÍDA DA APOSTA */}
-                          {betInfo.exit_minute_second != null && (
-                            <div><span className="font-semibold block text-turf-400 text-[10px] uppercase">Saída aos</span>{secondsToDisplay(betInfo.exit_minute_second + (betInfo.exit_additional_minute_second ?? 0))}</div>
+                          {betInfo.exit_period != null && betInfo.exit_minute_second != null && (
+                            <div><span className="font-semibold block text-turf-400 text-[10px] uppercase">Saída aos</span>{matchTimeToDisplay({
+                              period: betInfo.exit_period,
+                              minute_second: betInfo.exit_minute_second,
+                              additional_minute_second: betInfo.exit_additional_minute_second
+                            })}</div>
                           )}
  
                           <div>
