@@ -16,6 +16,8 @@ class Bet(Base):
 
     match = relationship("Match", back_populates="bet")
 
+    team = Column(String, nullable=False)
+
     stake = Column(Numeric, nullable=False)
 
     entry_odd = Column(Numeric, nullable=False)

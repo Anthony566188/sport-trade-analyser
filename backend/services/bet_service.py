@@ -8,6 +8,7 @@ import repositories.match_repository as match_repository
 from models.bet import Bet
 from models.enums.bet_type import BetType
 from models.enums.match_period import MatchPeriod
+from models.match import Match
 from models.value_objects.match_time import MatchTime
 from schemas.bet_exit_request import BetExitRequest
 
@@ -15,13 +16,16 @@ from schemas.bet_exit_request import BetExitRequest
 def create(bet: Bet, db):
 
     method_repository.get_by_id(bet.id_method, db)
-    match_repository.get_by_id(bet.id_match, db)
+    match: Match = match_repository.get_by_id(bet.id_match, db)
+
+    _has_team_in_match(bet.team, match)
 
     bet.date = datetime.now()
 
     bet = Bet(
         id_method=bet.id_method,
         id_match=bet.id_match,
+        team=bet.team,
         stake=bet.stake,
         entry_odd=bet.entry_odd,
         type=bet.type,
@@ -75,10 +79,13 @@ def exit(id, exit_data: BetExitRequest, db) -> Bet:
 def update(id: int, updated_bet: Bet, db: Session):
     method_repository.get_by_id(updated_bet.id_method, db)
     bet: Bet = repository.get_by_id(id, db)
+    match: Match = match_repository.get_by_id(updated_bet.id_match, db)
 
     # Faz com que a aposta só possa ser encerrada através de 'exit'
     if bet.exit_odd is None and updated_bet.exit_odd != None:
         raise ValueError("'exit_odd' não pode ser alterado!")
+
+    _has_team_in_match(updated_bet.team, match)
 
     bet.id_method = updated_bet.id_method
     bet.stake = updated_bet.stake
@@ -106,3 +113,11 @@ def update(id: int, updated_bet: Bet, db: Session):
 def delete(id, db):
     bet_exists = repository.get_by_id(id, db)
     return repository.delete(bet_exists, db)
+
+# Método privado que verifica se o time da aposta está na partida
+def _has_team_in_match(team: str, match: Match):
+    if team != match.team_home and team != match.team_away:
+        raise ValueError(
+            f"Time inválido: '{team}'. O evento só pode ser atribuído a um dos times "
+            f"desta partida ({match.team_home} x {match.team_away})."
+        )

@@ -12,6 +12,7 @@ from models.value_objects.match_time import MatchTime, check_football_limits
 class UpdateBetRequest(BaseModel):
     id_method: int
     id_match: int
+    team: str
     stake: Decimal
     entry_odd: Decimal
     type: BetType
@@ -73,6 +74,7 @@ class UpdateBetRequest(BaseModel):
         return Bet(
             id_method=self.id_method,
             id_match=self.id_match,
+            team=self.team.upper().strip(),
             stake=self.stake,
             entry_odd=self.entry_odd,
             type=self.type.value,
