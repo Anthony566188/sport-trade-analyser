@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { secondsToDisplay, displayToSeconds, formatMinutesSeconds } from '../../utils/time'
+import { MatchPeriod, MATCH_PERIOD_LABELS } from '../../types'
 import type { ChronometerStatus } from '../../hooks/useChronometer'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -14,12 +15,16 @@ interface TimelineControlsProps {
   elapsed: number
   /** Estado do cronômetro */
   status: ChronometerStatus
+  /** Estado explícito do período da partida */
+  period: MatchPeriod
   /** Alterna play/pause */
   onTogglePlayPause: () => void
   /** Avança ou recua N segundos */
   onSeek: (delta: number) => void
   /** Define o tempo manualmente */
   onSetTime: (seconds: number) => void
+  /** Atualiza explicitamente o período do jogo */
+  onChangePeriod: (period: MatchPeriod) => void
   /** Encerra a timeline (persiste no backend) */
   onStop: () => void
   /** Quando true, todos os controles ficam desabilitados */
@@ -42,9 +47,11 @@ interface TimelineControlsProps {
 export const TimelineControls: React.FC<TimelineControlsProps> = ({
   elapsed,
   status,
+  period,
   onTogglePlayPause,
   onSeek,
   onSetTime,
+  onChangePeriod,
   onStop,
   disabled = false,
   className,
@@ -192,16 +199,37 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
         </div>
 
         {/* Badge de status */}
-        <span className={cn(
-          'text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full',
-          isRunning
-            ? 'bg-pitch-100 dark:bg-pitch-950/40 text-pitch-700 dark:text-pitch-400'
-            : isPaused
-            ? 'bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400'
-            : 'bg-turf-200 dark:bg-turf-700 text-turf-500 dark:text-turf-400',
-        )}>
-          {statusLabel}
-        </span>
+        {/* Seleção de Período e Badge de status */}
+        <div className="flex items-center gap-2">
+          <select
+            value={period}
+            onChange={e => onChangePeriod(e.target.value as MatchPeriod)}
+            disabled={disabled || isIdle}
+            aria-label="Selecionar período da partida"
+            className={cn(
+              "text-xs font-semibold rounded-lg px-2 py-1 border outline-none bg-transparent appearance-none cursor-pointer",
+              "text-turf-700 dark:text-turf-300 border-turf-200 dark:border-turf-700 focus:border-pitch-500 transition-colors",
+              (disabled || isIdle) && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            {Object.entries(MATCH_PERIOD_LABELS).map(([val, label]) => (
+              <option key={val} value={val} className="text-black dark:text-white bg-white dark:bg-turf-800">
+                {label}
+              </option>
+            ))}
+          </select>
+
+          <span className={cn(
+            'text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full',
+            isRunning
+              ? 'bg-pitch-100 dark:bg-pitch-950/40 text-pitch-700 dark:text-pitch-400'
+              : isPaused
+              ? 'bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400'
+              : 'bg-turf-200 dark:bg-turf-700 text-turf-500 dark:text-turf-400',
+          )}>
+            {statusLabel}
+          </span>
+        </div>
       </div>
 
       {/* ── Linha inferior: botões de controle ── */}

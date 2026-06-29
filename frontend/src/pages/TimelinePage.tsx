@@ -174,9 +174,9 @@ export const TimelinePage: React.FC = () => {
     if (!timeline || !confirm('Encerrar a timeline? Esta ação não pode ser desfeita.')) return
     try {
       await timelineService.stop(timeline.id, {
-        match_period: MatchPeriod.SECOND_HALF, // Placeholder (UX Pendente)
-        minute_second_finished: chronometer.elapsed,
-        additional_minute_second_finished: 0 
+        match_period: chronometer.period,
+        minute_second_finished: chronometer.minuteSecond,
+        additional_minute_second_finished: chronometer.additionalMinuteSecond 
       })
       chronometer.pause()
       setTimeline(prev => prev
@@ -208,9 +208,9 @@ export const TimelinePage: React.FC = () => {
     setAddingEvt(true)
     setPanelError(null)
 
-    const minuteSecond = Math.min(chronometer.elapsed, 2700)
-    const additionalMinuteSecond = chronometer.elapsed > 2700 ? chronometer.elapsed - 2700 : null
-    const currentPeriod = MatchPeriod.FIRST_HALF // Placeholder para uso no novo backend (até os seletores UX existirem)
+    const minuteSecond = chronometer.minuteSecond
+    const additionalMinuteSecond = chronometer.additionalMinuteSecond
+    const currentPeriod = chronometer.period
 
     try {
       let newEvent: TimelineEvent | null = null
@@ -354,15 +354,11 @@ export const TimelinePage: React.FC = () => {
       const odd = Number(cashoutOddValue)
       if (odd <= 1) { alert('Odd deve ser maior que 1'); return }
 
-      const elapsed = chronometer.elapsed
-      const minuteSecond = Math.min(elapsed, 2700)
-      const additional = elapsed > 2700 ? elapsed - 2700 : null
-
       const payload: BetExitRequestPayload = {
         exit_odd: odd,
-        exit_period: MatchPeriod.FIRST_HALF, // Placeholder (UX Pendente)
-        exit_minute_second: minuteSecond,
-        exit_additional_minute_second: additional ?? 0
+        exit_period: chronometer.period,
+        exit_minute_second: chronometer.minuteSecond,
+        exit_additional_minute_second: chronometer.additionalMinuteSecond
       }
 
       const updated = await betService.exit(cashoutBet.id, payload)
@@ -461,9 +457,11 @@ export const TimelinePage: React.FC = () => {
         <TimelineControls
           elapsed={chronometer.elapsed}
           status={chronometer.status}
+          period={chronometer.period}
           onTogglePlayPause={chronometer.togglePlayPause}
           onSeek={chronometer.seek}
           onSetTime={chronometer.setTime}
+          onChangePeriod={chronometer.setMatchPeriod}
           onStop={handleStopTimeline}
         />
       )}

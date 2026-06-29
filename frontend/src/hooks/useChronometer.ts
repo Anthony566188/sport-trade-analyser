@@ -11,26 +11,41 @@ export function useChronometer() {
   const [additionalMinuteSecond, setAdditionalMinuteSecond] = useState(0)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-// Atualiza as trincas de tempo de forma centralizada toda vez que o elapsed mudar
+// Atualiza as trincas de tempo de forma centralizada toda vez que o elapsed ou o period mudar
   useEffect(() => {
-    // Regra de transição lógica baseada nos limites de PERIOD_BOUNDARIES do domínio backend
-    if (elapsed <= 2700) {
-      setPeriod(MatchPeriod.FIRST_HALF)
-      setMinuteSecond(elapsed)
-      setAdditionalMinuteSecond(0)
-    } else {
-      // Se ultrapassou 45 minutos (2700s), entra na regra de acréscimo do 1T ou avança para o 2T
-      // Por compatibilidade com o fluxo linear da TimelinePage, calculamos o acréscimo provisório
-      setPeriod(MatchPeriod.SECOND_HALF)
-      if (elapsed <= 5400) {
-        setMinuteSecond(elapsed)
-        setAdditionalMinuteSecond(0)
-      } else {
-        setMinuteSecond(5400)
-        setAdditionalMinuteSecond(elapsed - 5400)
-      }
+    let calcMinSec = 0
+    let calcAdd = 0
+
+    // O cálculo obedece ao estado explícito atual do MatchPeriod
+    switch (period) {
+      case MatchPeriod.FIRST_HALF:
+        calcMinSec = Math.min(elapsed, 2700)
+        calcAdd = Math.max(0, elapsed - 2700)
+        break
+      case MatchPeriod.HALF_TIME:
+        calcMinSec = 2700
+        calcAdd = 0
+        break
+      case MatchPeriod.SECOND_HALF:
+        calcMinSec = Math.min(elapsed, 5400)
+        calcAdd = Math.max(0, elapsed - 5400)
+        break
+      case MatchPeriod.EXTRA_FIRST:
+        calcMinSec = Math.min(elapsed, 6300)
+        calcAdd = Math.max(0, elapsed - 6300)
+        break
+      case MatchPeriod.EXTRA_SECOND:
+        calcMinSec = Math.min(elapsed, 7200)
+        calcAdd = Math.max(0, elapsed - 7200)
+        break
+      default:
+        calcMinSec = elapsed
+        calcAdd = 0
     }
-  }, [elapsed])
+
+    setMinuteSecond(calcMinSec)
+    setAdditionalMinuteSecond(calcAdd)
+  }, [elapsed, period])
 
   // Inicia o cronômetro com um tempo base e define o estado inicial
   const initialize = useCallback((startSeconds: number, autoStart: boolean = false) => {
