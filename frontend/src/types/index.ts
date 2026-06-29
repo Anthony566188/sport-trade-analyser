@@ -116,6 +116,7 @@ export interface UpdateTimelineEventRequestPayload {
 export interface BetRequestPayload {
   id_method: number;
   id_match: number;
+  team: string;
   stake: number;
   entry_odd: number;
   type: BetType;
@@ -127,6 +128,7 @@ export interface BetRequestPayload {
 export interface UpdateBetRequestPayload {
   id_method: number;
   id_match: number;
+  team: string;
   stake: number;
   entry_odd: number;
   type: BetType;
@@ -196,6 +198,7 @@ export interface Bet {
   id: number;
   id_method: number;
   id_match: number;
+  team: string;
   stake: number;
   entry_odd: number;
   exit_odd: number | null;
