@@ -438,6 +438,39 @@ export const TimelinePage: React.FC = () => {
         </div>
       </div>
 
+      {/* ── Painel de Odds de Match (Estático) ── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center w-full">
+        {/* Time da Casa */}
+        <div className="flex-1 flex items-center justify-between p-3 rounded-xl border border-turf-200 dark:border-turf-700 bg-white dark:bg-turf-800/40">
+          <span className="font-semibold text-sm sm:text-base text-turf-900 dark:text-turf-100 truncate mr-2">
+            {match.team_home}
+          </span>
+          <div className="flex gap-2 shrink-0">
+            <button type="button" className="px-4 py-1.5 rounded-lg text-sm font-bold bg-pitch-100 text-pitch-700 dark:bg-pitch-900/50 dark:text-pitch-400 hover:bg-pitch-200 dark:hover:bg-pitch-900 transition-colors">
+              Back
+            </button>
+            <button type="button" className="px-4 py-1.5 rounded-lg text-sm font-bold bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900 transition-colors">
+              Lay
+            </button>
+          </div>
+        </div>
+
+        {/* Time de Fora */}
+        <div className="flex-1 flex items-center justify-between p-3 rounded-xl border border-turf-200 dark:border-turf-700 bg-white dark:bg-turf-800/40">
+          <span className="font-semibold text-sm sm:text-base text-turf-900 dark:text-turf-100 truncate mr-2">
+            {match.team_away}
+          </span>
+          <div className="flex gap-2 shrink-0">
+            <button type="button" className="px-4 py-1.5 rounded-lg text-sm font-bold bg-pitch-100 text-pitch-700 dark:bg-pitch-900/50 dark:text-pitch-400 hover:bg-pitch-200 dark:hover:bg-pitch-900 transition-colors">
+              Back
+            </button>
+            <button type="button" className="px-4 py-1.5 rounded-lg text-sm font-bold bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900 transition-colors">
+              Lay
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* ── Cronômetro / Criar timeline ── */}
       {!timeline ? (
         <CreateTimelinePainel onConfirm={handleCreateTimeline} />
