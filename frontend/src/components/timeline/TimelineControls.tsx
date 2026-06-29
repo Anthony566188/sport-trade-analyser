@@ -6,10 +6,9 @@ import {
 import { cn } from '../../utils/cn'
 import { secondsToDisplay, displayToSeconds, formatMinutesSeconds } from '../../utils/time'
 import { MatchPeriod, MATCH_PERIOD_LABELS } from '../../types'
-import type { ChronometerStatus } from '../../hooks/useChronometer'
+import type { ChronometerStatus, PhaseTransitionAction } from '../../hooks/useChronometer'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
 interface TimelineControlsProps {
   /** Tempo atual em segundos */
   elapsed: number
@@ -27,6 +26,8 @@ interface TimelineControlsProps {
   onChangePeriod: (period: MatchPeriod) => void
   /** Encerra a timeline (persiste no backend) */
   onStop: () => void
+  /** Transição explícita de fase do jogo */
+  onPhaseTransition: (action: PhaseTransitionAction) => void
   /** Quando true, todos os controles ficam desabilitados */
   disabled?: boolean
   className?: string
@@ -52,6 +53,7 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
   onSeek,
   onSetTime,
   onChangePeriod,
+  onPhaseTransition,
   onStop,
   disabled = false,
   className,
@@ -105,6 +107,39 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
     : isPaused
     ? 'bg-amber-400'
     : 'bg-turf-300 dark:bg-turf-600'
+
+  // ── Lógica de Transição de Fase ──
+  let nextPhaseAction: PhaseTransitionAction | null = null
+  let phaseActionLabel = ''
+
+  if (period === MatchPeriod.FIRST_HALF) {
+    nextPhaseAction = 'END_1H'
+    phaseActionLabel = 'Encerrar 1º Tempo'
+  } else if (period === MatchPeriod.HALF_TIME) {
+    nextPhaseAction = 'START_2H'
+    phaseActionLabel = 'Iniciar 2º Tempo'
+  } else if (period === MatchPeriod.SECOND_HALF) {
+    if (isPaused) {
+      nextPhaseAction = 'START_E1'
+      phaseActionLabel = 'Iniciar Prorrogação (1T)'
+    } else {
+      nextPhaseAction = 'END_2H'
+      phaseActionLabel = 'Encerrar 2º Tempo'
+    }
+  } else if (period === MatchPeriod.EXTRA_FIRST) {
+    if (isPaused) {
+      nextPhaseAction = 'START_E2'
+      phaseActionLabel = 'Iniciar Prorrogação (2T)'
+    } else {
+      nextPhaseAction = 'END_E1'
+      phaseActionLabel = 'Encerrar 1ºT Prorrogação'
+    }
+  } else if (period === MatchPeriod.EXTRA_SECOND) {
+    if (!isPaused) {
+      nextPhaseAction = 'END_E2'
+      phaseActionLabel = 'Encerrar Prorrogação'
+    }
+  }
 
   return (
     <div
@@ -234,6 +269,24 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
 
       {/* ── Linha inferior: botões de controle ── */}
       <div className="flex items-center gap-2 flex-wrap">
+
+        {/* Transição de Fase */}
+        {nextPhaseAction && (
+          <>
+            <button
+              onClick={() => onPhaseTransition(nextPhaseAction!)}
+              disabled={disabled || isIdle}
+              className={cn(
+                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors',
+                'bg-blue-600 hover:bg-blue-700 text-white shadow-sm',
+                'disabled:opacity-40 disabled:cursor-not-allowed'
+              )}
+            >
+              {phaseActionLabel}
+            </button>
+            <div className="w-px h-5 bg-turf-200 dark:bg-turf-700 mx-1" aria-hidden />
+          </>
+        )}
 
         {/* -5s */}
         <button

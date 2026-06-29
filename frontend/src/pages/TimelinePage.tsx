@@ -462,6 +462,7 @@ export const TimelinePage: React.FC = () => {
           onSeek={chronometer.seek}
           onSetTime={chronometer.setTime}
           onChangePeriod={chronometer.setMatchPeriod}
+          onPhaseTransition={chronometer.transitionPeriod}
           onStop={handleStopTimeline}
         />
       )}

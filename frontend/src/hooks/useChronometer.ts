@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { MatchPeriod } from '../types'
 
 export type ChronometerStatus = 'idle' | 'running' | 'paused' | 'stopped'
+export type PhaseTransitionAction = 'END_1H' | 'START_2H' | 'END_2H' | 'START_E1' | 'END_E1' | 'START_E2' | 'END_E2'
 
 export function useChronometer() {
   const [elapsed, setElapsed] = useState(0)
@@ -97,6 +98,40 @@ export function useChronometer() {
     }
   }, [status])
 
+  // Função de transição explícita (Dirigida pela UI)
+  const transitionPeriod = useCallback((action: PhaseTransitionAction) => {
+    switch (action) {
+      case 'END_1H':
+        setPeriod(MatchPeriod.HALF_TIME)
+        setStatus('paused')
+        break
+      case 'START_2H':
+        setPeriod(MatchPeriod.SECOND_HALF)
+        setElapsed(2700) // 45:00
+        setStatus('running')
+        break
+      case 'END_2H':
+        setStatus('paused')
+        break
+      case 'START_E1':
+        setPeriod(MatchPeriod.EXTRA_FIRST)
+        setElapsed(5400) // 90:00
+        setStatus('running')
+        break
+      case 'END_E1':
+        setStatus('paused')
+        break
+      case 'START_E2':
+        setPeriod(MatchPeriod.EXTRA_SECOND)
+        setElapsed(6300) // 105:00
+        setStatus('running')
+        break
+      case 'END_E2':
+        setStatus('paused')
+        break
+    }
+  }, [])
+
   return {
     elapsed,
     status,
@@ -109,5 +144,6 @@ export function useChronometer() {
     seek,
     setTime,
     setMatchPeriod,
+    transitionPeriod,
   }
 }
