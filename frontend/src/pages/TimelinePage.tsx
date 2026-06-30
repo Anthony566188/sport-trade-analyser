@@ -16,6 +16,7 @@ import { methodService } from '../services/methodService'
 import { Spinner } from '../components/ui/Spinner'
 import { TimelineControls } from '../components/timeline/TimelineControls'
 import { CreateTimelinePainel } from '../components/timeline/CreateTimelinePainel'
+import { BetWidget } from '../components/timeline/BetWidget'
 import { useChronometer } from '../hooks/useChronometer'
 import { useTimelineSort } from '../hooks/useTimelineSort'
 import type { UnifiedTimelineItem } from '../hooks/useTimelineSort'
@@ -898,6 +899,9 @@ export const TimelinePage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ── Widget flutuante de Apostas ── */}
+      <BetWidget />
 
     </div>
   )
