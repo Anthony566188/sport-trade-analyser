@@ -17,6 +17,7 @@ import { Spinner } from '../components/ui/Spinner'
 import { TimelineControls } from '../components/timeline/TimelineControls'
 import { CreateTimelinePainel } from '../components/timeline/CreateTimelinePainel'
 import { BetWidget } from '../components/timeline/BetWidget'
+import type { PendingBet } from '../components/timeline/BetWidget'
 import { useChronometer } from '../hooks/useChronometer'
 import { useTimelineSort } from '../hooks/useTimelineSort'
 import type { UnifiedTimelineItem } from '../hooks/useTimelineSort'
@@ -60,6 +61,7 @@ export const TimelinePage: React.FC = () => {
   const [timeline, setTimeline] = useState<Timeline | null>(null)
   const [events,   setEvents]   = useState<TimelineEvent[]>([])
   const [bets,     setBets]     = useState<Record<number, Bet>>({}) // Cache local das apostas na timeline
+  const [pendingBets, setPendingBets] = useState<PendingBet[]>([])  // Apostas ainda não confirmadas
   const [criteria, setCriteria] = useState<Criterion[]>([])
   const [methods,  setMethods]  = useState<Method[]>([])
   const [loading,  setLoading]  = useState(true)
@@ -152,6 +154,19 @@ export const TimelinePage: React.FC = () => {
     load()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matchId])
+
+  // ── Adicionar aposta pendente (via botões Back/Lay) ───────────────────────
+  const addPendingBet = useCallback((team: string, type: BetType) => {
+    const newBet: PendingBet = {
+      localId:  `${Date.now()}-${Math.random()}`,
+      team,
+      type,
+      odd:      '',
+      stake:    '',
+      methodId: '',
+    }
+    setPendingBets(prev => [...prev, newBet])
+  }, [])
 
   // ── Criar timeline (separado da partida) ──────────────────────────────────
   const handleCreateTimeline = useCallback(async (startSeconds: number) => {
@@ -447,25 +462,23 @@ export const TimelinePage: React.FC = () => {
             {match.team_home}
           </span>
           <div className="flex gap-2 shrink-0">
-            <button type="button" className="px-4 py-1.5 rounded-lg text-sm font-bold bg-pitch-100 text-pitch-700 dark:bg-pitch-900/50 dark:text-pitch-400 hover:bg-pitch-200 dark:hover:bg-pitch-900 transition-colors">
+            <button type="button" onClick={() => addPendingBet(match.team_home, 'BACK')} className="px-4 py-1.5 rounded-lg text-sm font-bold bg-pitch-100 text-pitch-700 dark:bg-pitch-900/50 dark:text-pitch-400 hover:bg-pitch-200 dark:hover:bg-pitch-900 transition-colors">
               Back
             </button>
-            <button type="button" className="px-4 py-1.5 rounded-lg text-sm font-bold bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900 transition-colors">
+            <button type="button" onClick={() => addPendingBet(match.team_home, 'LAY')} className="px-4 py-1.5 rounded-lg text-sm font-bold bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900 transition-colors">
               Lay
             </button>
           </div>
         </div>
-
-        {/* Time de Fora */}
         <div className="flex-1 flex items-center justify-between p-3 rounded-xl border border-turf-200 dark:border-turf-700 bg-white dark:bg-turf-800/40">
           <span className="font-semibold text-sm sm:text-base text-turf-900 dark:text-turf-100 truncate mr-2">
             {match.team_away}
           </span>
           <div className="flex gap-2 shrink-0">
-            <button type="button" className="px-4 py-1.5 rounded-lg text-sm font-bold bg-pitch-100 text-pitch-700 dark:bg-pitch-900/50 dark:text-pitch-400 hover:bg-pitch-200 dark:hover:bg-pitch-900 transition-colors">
+            <button type="button" onClick={() => addPendingBet(match.team_away, 'BACK')} className="px-4 py-1.5 rounded-lg text-sm font-bold bg-pitch-100 text-pitch-700 dark:bg-pitch-900/50 dark:text-pitch-400 hover:bg-pitch-200 dark:hover:bg-pitch-900 transition-colors">
               Back
             </button>
-            <button type="button" className="px-4 py-1.5 rounded-lg text-sm font-bold bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900 transition-colors">
+            <button type="button" onClick={() => addPendingBet(match.team_away, 'LAY')} className="px-4 py-1.5 rounded-lg text-sm font-bold bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900 transition-colors">
               Lay
             </button>
           </div>
@@ -901,7 +914,21 @@ export const TimelinePage: React.FC = () => {
       )}
 
       {/* ── Widget flutuante de Apostas ── */}
-      <BetWidget />
+      <BetWidget
+        matchId={matchId}
+        methods={methods}
+        chronometer={{
+          period:                  chronometer.period,
+          minuteSecond:            chronometer.minuteSecond,
+          additionalMinuteSecond:  chronometer.additionalMinuteSecond,
+        }}
+        pendingBets={pendingBets}
+        setPendingBets={setPendingBets}
+        confirmedBets={Object.values(bets)}
+        onBetCreated={bet => setBets(prev => ({ ...prev, [bet.id]: bet }))}
+        onBetDeleted={betId => setBets(prev => { const n = { ...prev }; delete n[betId]; return n })}
+        onBetExited={bet => setBets(prev => ({ ...prev, [bet.id]: bet }))}
+      />
 
     </div>
   )
