@@ -66,26 +66,138 @@ export function secondsToDisplay(s: number): string {
   return matchTimeToDisplay(trinca);
 }
 
+/**
+ * Formata o tempo completo considerando o estado explícito do Período
+ * (Resolve falhas onde segundos de acréscimo "avançavam" a fase visualmente)
+ */
+export function formatChronometerTime(elapsed: number, period: MatchPeriod): string {
+  let calcMinSec = 0
+  let calcAdd = 0
 
-export function displayToSeconds(value: string): number | null {
-  const trimmed = value.trim()
-
-  // Aceita formatos: "90", "7:30", "07:30", "45:00"
-  if (/^\d+$/.test(trimmed)) {
-    return Math.max(0, parseInt(trimmed, 10))
+  switch (period) {
+    case MatchPeriod.FIRST_HALF:
+      calcMinSec = Math.min(elapsed, 2700)
+      calcAdd = Math.max(0, elapsed - 2700)
+      break
+    case MatchPeriod.HALF_TIME:
+      calcMinSec = 2700
+      calcAdd = 0
+      break
+    case MatchPeriod.SECOND_HALF:
+      calcMinSec = Math.min(elapsed, 5400)
+      calcAdd = Math.max(0, elapsed - 5400)
+      break
+    case MatchPeriod.EXTRA_FIRST:
+      calcMinSec = Math.min(elapsed, 6300)
+      calcAdd = Math.max(0, elapsed - 6300)
+      break
+    case MatchPeriod.EXTRA_SECOND:
+      calcMinSec = Math.min(elapsed, 7200)
+      calcAdd = Math.max(0, elapsed - 7200)
+      break
+    default:
+      calcMinSec = elapsed
+      calcAdd = 0
   }
 
-  const parts = trimmed.split(':')
-  if (parts.length !== 2) return null
+  return matchTimeToDisplay({ period, minute_second: calcMinSec, additional_minute_second: calcAdd })
+}
 
-  const minutes = parseInt(parts[0], 10)
-  const seconds = parseInt(parts[1], 10)
+/**
+ * Formata o tempo para o input de edição manual, preservando a notação de acréscimo se houver (ex: 45:00+02:30).
+ */
+export function formatEditTime(elapsed: number, period: MatchPeriod): string {
+  let calcMinSec = 0
+  let calcAdd = 0
 
-  if (isNaN(minutes) || isNaN(seconds)) return null
-  if (seconds < 0 || seconds > 59)      return null
-  if (minutes < 0)                       return null
+  switch (period) {
+    case MatchPeriod.FIRST_HALF:
+      calcMinSec = Math.min(elapsed, 2700)
+      calcAdd = Math.max(0, elapsed - 2700)
+      break
+    case MatchPeriod.HALF_TIME:
+      calcMinSec = 2700
+      calcAdd = 0
+      break
+    case MatchPeriod.SECOND_HALF:
+      calcMinSec = Math.min(elapsed, 5400)
+      calcAdd = Math.max(0, elapsed - 5400)
+      break
+    case MatchPeriod.EXTRA_FIRST:
+      calcMinSec = Math.min(elapsed, 6300)
+      calcAdd = Math.max(0, elapsed - 6300)
+      break
+    case MatchPeriod.EXTRA_SECOND:
+      calcMinSec = Math.min(elapsed, 7200)
+      calcAdd = Math.max(0, elapsed - 7200)
+      break
+    default:
+      calcMinSec = elapsed
+      calcAdd = 0
+  }
 
-  return minutes * 60 + seconds
+  const formatPart = (s: number) => {
+    const m = Math.floor(s / 60).toString().padStart(2, '0')
+    const sec = (s % 60).toString().padStart(2, '0')
+    return `${m}:${sec}`
+  }
+
+  if (calcAdd > 0) {
+    return `${formatPart(calcMinSec)}+${formatPart(calcAdd)}`
+  }
+  return formatPart(calcMinSec)
+}
+
+/**
+ * Converte a string inserida pelo usuário em segundos e também infere o Período da Partida.
+ * Aceita MM:SS, MM:SS+MM:SS, MM:SS+SS (ou com ' no lugar do +)
+ */
+export function displayToSeconds(value: string): { seconds: number; period: MatchPeriod } | null {
+  const trimmed = value.trim()
+
+  if (/^\d+$/.test(trimmed)) {
+    const sec = Math.max(0, parseInt(trimmed, 10))
+    return { seconds: sec, period: inferMatchTimeFromSeconds(sec).period }
+  }
+
+  // Captura os grupos da string considerando o sinal de '+' ou "'"
+  const match = trimmed.match(/^(\d+):(\d+)(?:[+'](\d+):(\d+)|[+'](\d+))?$/)
+  if (!match) return null
+
+  const baseMin = parseInt(match[1], 10)
+  const baseSec = parseInt(match[2], 10)
+  if (baseSec > 59) return null
+
+  const baseSeconds = baseMin * 60 + baseSec
+  let addSeconds = 0
+
+  if (match[3] !== undefined && match[4] !== undefined) {
+    const addMin = parseInt(match[3], 10)
+    const addS = parseInt(match[4], 10)
+    if (addS > 59) return null
+    addSeconds = addMin * 60 + addS
+  } else if (match[5] !== undefined) {
+    addSeconds = parseInt(match[5], 10)
+  }
+
+  const totalSeconds = baseSeconds + addSeconds
+  let period = MatchPeriod.FIRST_HALF
+
+  // Inferência automática de Período baseada no input
+  if (addSeconds > 0) {
+    if (baseSeconds === 2700) period = MatchPeriod.FIRST_HALF
+    else if (baseSeconds === 5400) period = MatchPeriod.SECOND_HALF
+    else if (baseSeconds === 6300) period = MatchPeriod.EXTRA_FIRST
+    else if (baseSeconds === 7200) period = MatchPeriod.EXTRA_SECOND
+    else return null // Acréscimos só são permitidos nos limites exatos dos períodos
+  } else {
+    if (baseSeconds <= 2700) period = MatchPeriod.FIRST_HALF
+    else if (baseSeconds > 2700 && baseSeconds <= 5400) period = MatchPeriod.SECOND_HALF
+    else if (baseSeconds > 5400 && baseSeconds <= 6300) period = MatchPeriod.EXTRA_FIRST
+    else if (baseSeconds > 6300) period = MatchPeriod.EXTRA_SECOND
+  }
+
+  return { seconds: totalSeconds, period }
 }
 
 /**

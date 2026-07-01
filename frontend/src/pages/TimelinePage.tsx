@@ -19,7 +19,7 @@ import type { PendingBet } from '../components/timeline/BetWidget'
 import { useChronometer } from '../hooks/useChronometer'
 import { useTimelineSort } from '../hooks/useTimelineSort'
 import type { UnifiedTimelineItem } from '../hooks/useTimelineSort'
-import { secondsToDisplay, matchTimeToDisplay } from '../utils/time'
+import { matchTimeToDisplay, formatChronometerTime } from '../utils/time'
 import { cn } from '../utils/cn'
 import {
   MatchPeriod,
@@ -363,7 +363,7 @@ export const TimelinePage: React.FC = () => {
           'bg-turf-50 dark:bg-turf-800/40 border-turf-200 dark:border-turf-700',
         )}>
           <span className="font-mono text-xl sm:text-2xl font-bold text-turf-500 dark:text-turf-400 tracking-tight">
-            {secondsToDisplay(chronometer.elapsed)}
+            {formatChronometerTime(chronometer.elapsed, chronometer.period)}
           </span>
           <span className="badge bg-turf-200 dark:bg-turf-700 text-turf-500 dark:text-turf-400">
             Encerrada
@@ -513,7 +513,7 @@ export const TimelinePage: React.FC = () => {
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-pitch-600 hover:bg-pitch-700 text-white transition-colors disabled:opacity-50"
                 >
                   {addingEvt && <Spinner size="sm" className="border-white border-t-transparent" />}
-                  Registrar às {secondsToDisplay(chronometer.elapsed)}
+                  Registrar às {formatChronometerTime(chronometer.elapsed, chronometer.period)}
                 </button>
                 <button
                   onClick={() => { setShowPanel(false); setPanelError(null) }}

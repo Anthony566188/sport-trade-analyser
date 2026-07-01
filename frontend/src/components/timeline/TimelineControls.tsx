@@ -4,7 +4,7 @@ import {
   StopCircle, Edit2, Check, X,
 } from 'lucide-react'
 import { cn } from '../../utils/cn'
-import { secondsToDisplay, displayToSeconds, formatMinutesSeconds } from '../../utils/time'
+import { formatChronometerTime, formatEditTime, displayToSeconds } from '../../utils/time'
 import { MatchPeriod, MATCH_PERIOD_LABELS } from '../../types'
 import type { ChronometerStatus, PhaseTransitionAction } from '../../hooks/useChronometer'
 
@@ -21,7 +21,7 @@ interface TimelineControlsProps {
   /** Avança ou recua N segundos */
   onSeek: (delta: number) => void
   /** Define o tempo manualmente */
-  onSetTime: (seconds: number) => void
+  onSetTime: (seconds: number, period: MatchPeriod) => void
   /** Atualiza explicitamente o período do jogo */
   onChangePeriod: (period: MatchPeriod) => void
   /** Encerra a timeline (persiste no backend) */
@@ -83,7 +83,8 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
       setEditError(true)
       return
     }
-    onSetTime(parsed)
+    // O tempo manipulado reescreve automaticamente a fase se necessário
+    onSetTime(parsed.seconds, parsed.period)
     setEditing(false)
     setEditError(false)
   }
@@ -177,7 +178,7 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
                 onChange={e => { setEditValue(e.target.value); setEditError(false) }}
                 onKeyDown={handleKeyDown}
                 aria-label="Editar tempo manualmente"
-                placeholder="MM:SS"
+                placeholder="MM:SS ou MM:SS+MM:SS"
                 className={cn(
                   'w-24 font-mono text-2xl font-bold bg-transparent border-b-2 outline-none text-center',
                   'text-turf-900 dark:text-turf-100',
@@ -206,7 +207,7 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
             <button
               onClick={() => {
                 if (!disabled && !isIdle) {
-                  setEditValue(formatMinutesSeconds(elapsed)) // Captura o tempo EXATO do clique
+                  setEditValue(formatEditTime(elapsed, period))
                   setEditing(true)
                 }
               }}
@@ -224,7 +225,7 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
                 (disabled || isIdle) && 'cursor-default',
               )}
             >
-              {secondsToDisplay(elapsed)}
+              {formatChronometerTime(elapsed, period)}
               {/* Ícone de lápis ao hover */}
               {!disabled && !isIdle && (
                 <Edit2 className="inline-block w-3.5 h-3.5 ml-2 opacity-0 group-hover:opacity-50 transition-opacity align-baseline" />
@@ -236,24 +237,6 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
         {/* Badge de status */}
         {/* Seleção de Período e Badge de status */}
         <div className="flex items-center gap-2">
-          <select
-            value={period}
-            onChange={e => onChangePeriod(e.target.value as MatchPeriod)}
-            disabled={disabled || isIdle}
-            aria-label="Selecionar período da partida"
-            className={cn(
-              "text-xs font-semibold rounded-lg px-2 py-1 border outline-none bg-transparent appearance-none cursor-pointer",
-              "text-turf-700 dark:text-turf-300 border-turf-200 dark:border-turf-700 focus:border-pitch-500 transition-colors",
-              (disabled || isIdle) && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            {Object.entries(MATCH_PERIOD_LABELS).map(([val, label]) => (
-              <option key={val} value={val} className="text-black dark:text-white bg-white dark:bg-turf-800">
-                {label}
-              </option>
-            ))}
-          </select>
-
           <span className={cn(
             'text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full',
             isRunning

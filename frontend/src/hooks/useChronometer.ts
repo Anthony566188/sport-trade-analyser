@@ -72,9 +72,10 @@ export function useChronometer() {
     setElapsed(prev => Math.max(0, prev + delta))
   }, [])
 
-  // Define o tempo manualmente (usado no input de edição manual)
-  const setTime = useCallback((seconds: number) => {
+  // Define o tempo manualmente em conjunto com o período inferido
+  const setTime = useCallback((seconds: number, newPeriod: MatchPeriod) => {
     setElapsed(Math.max(0, seconds))
+    setPeriod(newPeriod)
   }, [])
 
   // Altera e fixa o período da partida manualmente de forma explícita
