@@ -29,3 +29,7 @@ class EventOrCriterionError(ValueError):
 class AdditionalTimeError(ValueError):
     def __init__(self, message="O acréscimo não pode ser aplicado neste tempo"):
         super().__init__(message)
+
+class UniqueEventTimeError(ValueError):
+    def __init__(self, message="Já existe um evento registrado neste exato momento. Não é permitido adicionar múltiplos eventos no mesmo tempo (minuto, segundo e acréscimo)."):
+        super().__init__(message)

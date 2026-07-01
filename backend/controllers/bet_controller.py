@@ -1,12 +1,7 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from decimal import Decimal
 
 from database import get_db
-from exceptions.exceptions import InvalidPeriodError
-from models.enums.match_period import MatchPeriod
 from schemas.bet_exit_request import BetExitRequest
 from schemas.bet_request import BetRequest
 import services.bet_service as service

@@ -1,9 +1,11 @@
 from contextlib import contextmanager
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from exceptions.exceptions import BetChronologyError, InvalidPeriodError, InvalidBetTypeError, InvalidBetStakeError, \
-    InvalidBetOddError, BetEntryTimeError, EventOrCriterionError, AdditionalTimeError
-
+from exceptions.exceptions import (
+    BetChronologyError, InvalidPeriodError, InvalidBetTypeError, InvalidBetStakeError,
+    InvalidBetOddError, BetEntryTimeError, EventOrCriterionError, AdditionalTimeError,
+    UniqueEventTimeError
+)
 
 @contextmanager
 def handle_db_constraints(db: Session):
@@ -42,6 +44,9 @@ def handle_db_constraints(db: Session):
 
         elif "CK_ADDITIONAL_TIME" in error_msg:
             raise AdditionalTimeError()
+
+        elif "UNIQUE constraint failed: TIMELINE_EVENTS.MINUTE_SECOND" in error_msg:
+            raise UniqueEventTimeError()
 
         # Se a mensagem não corresponder a nenhum CHECK constraint conhecido, propaga a IntegrityError.
         else:
