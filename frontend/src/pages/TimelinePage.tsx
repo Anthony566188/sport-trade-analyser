@@ -10,6 +10,7 @@ import { timelineEventService } from '../services/timelineEventService'
 import { matchService } from '../services/matchService'
 import { criterionService } from '../services/criterionService'
 import { methodService } from '../services/methodService'
+import { betService } from '../services/betService'
 
 import { Spinner } from '../components/ui/Spinner'
 import { TimelineControls } from '../components/timeline/TimelineControls'
@@ -83,14 +84,22 @@ export const TimelinePage: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [matchData, tlData] = await Promise.all([
+        const [matchData, tlData, fetchedBets] = await Promise.all([
           matchService.getById(matchId),
           timelineService.getByMatchId(matchId).catch(() => null),
+          // Traz todas as apostas já atreladas a esta partida. 
+          // O .catch evita quebrar a tela se houver erro
+          betService.getByMatchId(matchId).catch(() => []), 
         ])
         setMatch(matchData)
 
         const tl = tlData ?? null
         setTimeline(tl)
+
+        // Populando cache de apostas a partir do novo endpoint
+        const newBets: Record<number, Bet> = {};
+        fetchedBets.forEach((b: Bet) => { newBets[b.id] = b });
+        setBets(newBets);
 
         if (tl) {
           const locationState = location.state as { autoStartTimeline?: boolean } | null
@@ -107,12 +116,6 @@ export const TimelinePage: React.FC = () => {
           setEvents(fetchedEvents)
           setCriteria(criteriaData)
           setMethods(methodsData)
-
-          // Populando cache de apostas a partir dos retornos da timeline/partida
-          const timelineBets: Bet[] = (tl as any).bets || (matchData as any).bets || [];
-          const newBets: Record<number, Bet> = {};
-          timelineBets.forEach(b => { newBets[b.id] = b });
-          setBets(newBets);
 
         } else {
           const [criteriaData, methodsData] = await Promise.all([

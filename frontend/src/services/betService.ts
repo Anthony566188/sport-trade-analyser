@@ -26,6 +26,15 @@ export const betService = {
   },
 
   /**
+   * Busca todas as apostas associadas a uma partida.
+   * GET /bet/match/{matchId}
+   */
+  getByMatchId: async (matchId: number): Promise<Bet[]> => {
+    const { data } = await api.get<Bet[]>(`/bet/match/${matchId}`);
+    return data;
+  },
+
+  /**
    * Atualiza os dados de uma aposta existente (trinca completa).
    * PUT /bet/{id}
    */
