@@ -114,6 +114,9 @@ def delete(id, db):
     bet_exists = repository.get_by_id(id, db)
     return repository.delete(bet_exists, db)
 
+def get_by_match(id_match: int, db: Session):
+    return repository.get_by_match(id_match, db)
+
 # Método privado que verifica se o time da aposta está na partida
 def _has_team_in_match(team: str, match: Match):
     if team != match.team_home and team != match.team_away:

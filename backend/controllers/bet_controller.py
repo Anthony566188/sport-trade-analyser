@@ -43,3 +43,7 @@ def update_bet(id: int, request: UpdateBetRequest, db: Session = Depends(get_db)
 @router.delete("/bet/{id}")
 def delete_bet(id: int, db: Session = Depends(get_db)):
     return service.delete(id, db)
+
+@router.get("/bet/match/{id_match}")
+def get_by_match(id_match: int, db: Session = Depends(get_db)):
+    return service.get_by_match(id_match, db)

@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from db_utils import handle_db_constraints
 from models.bet import Bet
 
+import repositories.match_repository as match_repository
+
 def create(bet: Bet, db: Session):
     db.add(bet)
     with handle_db_constraints(db):
@@ -34,5 +36,8 @@ def update(bet: Bet, db: Session):
 def delete(bet, db: Session):
     db.delete(bet)
     db.commit()
-
     return {"message": "Bet deleted."}
+
+def get_by_match(id_match: int, db: Session):
+    match_repository.get_by_id(id_match, db)
+    return db.query(Bet).filter(Bet.id_match == id_match).all()
