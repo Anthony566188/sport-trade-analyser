@@ -334,7 +334,7 @@ export const TimelinePage: React.FC = () => {
             {match.team_home}
           </span>
           <div className="flex gap-2 shrink-0">
-            <button type="button" onClick={() => addPendingBet(match.team_home, 'BACK')} className="px-4 py-1.5 rounded-lg text-sm font-bold bg-pitch-100 text-pitch-700 dark:bg-pitch-900/50 dark:text-pitch-400 hover:bg-pitch-200 dark:hover:bg-pitch-900 transition-colors">
+            <button type="button" onClick={() => addPendingBet(match.team_home, 'BACK')} className="px-4 py-1.5 rounded-lg text-sm font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900 transition-colors">
               Back
             </button>
             <button type="button" onClick={() => addPendingBet(match.team_home, 'LAY')} className="px-4 py-1.5 rounded-lg text-sm font-bold bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900 transition-colors">
@@ -347,7 +347,7 @@ export const TimelinePage: React.FC = () => {
             {match.team_away}
           </span>
           <div className="flex gap-2 shrink-0">
-            <button type="button" onClick={() => addPendingBet(match.team_away, 'BACK')} className="px-4 py-1.5 rounded-lg text-sm font-bold bg-pitch-100 text-pitch-700 dark:bg-pitch-900/50 dark:text-pitch-400 hover:bg-pitch-200 dark:hover:bg-pitch-900 transition-colors">
+            <button type="button" onClick={() => addPendingBet(match.team_away, 'BACK')} className="px-4 py-1.5 rounded-lg text-sm font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900 transition-colors">
               Back
             </button>
             <button type="button" onClick={() => addPendingBet(match.team_away, 'LAY')} className="px-4 py-1.5 rounded-lg text-sm font-bold bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900 transition-colors">
