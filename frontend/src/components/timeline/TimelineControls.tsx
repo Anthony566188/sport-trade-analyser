@@ -426,24 +426,6 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
       {/* ── Linha de botões de controle ── */}
       <div className="flex items-center gap-2 flex-wrap">
 
-        {/* Transição de Fase */}
-        {nextPhaseAction && (
-          <>
-            <button
-              onClick={() => onPhaseTransition(nextPhaseAction!)}
-              disabled={disabled || isIdle}
-              className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors',
-                'bg-blue-600 hover:bg-blue-700 text-white shadow-sm',
-                'disabled:opacity-40 disabled:cursor-not-allowed',
-              )}
-            >
-              {phaseActionLabel}
-            </button>
-            <div className="w-px h-5 bg-turf-200 dark:bg-turf-700 mx-1" aria-hidden />
-          </>
-        )}
-
         {/* -5s */}
         <button
           onClick={() => onSeek(-5)}
@@ -497,13 +479,31 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
 
         <div className="w-px h-5 bg-turf-200 dark:bg-turf-700 mx-1" aria-hidden />
 
+        {/* Transição de Fase */}
+        {nextPhaseAction && (
+          <>
+            <button
+              onClick={() => onPhaseTransition(nextPhaseAction!)}
+              disabled={disabled || isIdle}
+              className={cn(
+                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors',
+                'bg-blue-600 hover:bg-blue-700 text-white shadow-sm',
+                'disabled:opacity-40 disabled:cursor-not-allowed',
+              )}
+            >
+              {phaseActionLabel}
+            </button>
+            <div className="w-px h-5 bg-turf-200 dark:bg-turf-700 mx-1" aria-hidden />
+          </>
+        )}
+
         {/* Encerrar */}
         <button
           onClick={onStop}
           disabled={disabled || isIdle}
           aria-label="Encerrar timeline"
           className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
+            'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-colors border',
             'text-red-500 dark:text-red-400 border-red-200 dark:border-red-900',
             'hover:bg-red-50 dark:hover:bg-red-950/20',
             'disabled:opacity-40 disabled:cursor-not-allowed',
