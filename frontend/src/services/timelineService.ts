@@ -30,7 +30,18 @@ export const timelineService = {
    * Encerra a timeline registrando o período e momento do apito final.
    * PUT /timeline/stop/{id}
    */
-  stop: async (id: number, params: StopTimelineParams): Promise<void> => {
-    await api.put(`/timeline/stop/${id}`, params);
+  stop: async (
+    id: number,
+    data: {
+      match_period_finished: string;
+      minute_second_finished: number;
+      additional_minute_second_finished: number;
+    }
+  ) => {
+    const response = await api.put(`/timeline/stop/${id}`, null, {
+      params: data,
+    });
+    
+    return response.data;
   },
 };

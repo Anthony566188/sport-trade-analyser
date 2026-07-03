@@ -122,18 +122,7 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
 
       {/* ── Controles ── */}
       <div className="flex items-center gap-2 flex-wrap">
-        {nextPhaseAction && (
-          <>
-            <button
-              onClick={() => onPhaseTransition(nextPhaseAction!)}
-              disabled={disabled || isIdle}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              {phaseLabel}
-            </button>
-            <div className="w-px h-5 bg-turf-200 dark:bg-turf-700 mx-1" />
-          </>
-        )}
+        
 
         <button onClick={() => onSeek(-5)} disabled={disabled || isIdle}
           aria-label="-5s"
@@ -163,6 +152,21 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border text-red-500 dark:text-red-400 border-red-200 dark:border-red-900 hover:bg-red-50 dark:hover:bg-red-950/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
           <StopCircle className="w-3.5 h-3.5" /> Encerrar
         </button>
+
+        {nextPhaseAction && (
+          <>
+            <div className="w-px h-5 bg-turf-200 dark:bg-turf-700 mx-1" />
+            <button
+              onClick={() => onPhaseTransition(nextPhaseAction!)}
+              disabled={disabled || isIdle}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {phaseLabel}
+            </button>
+            
+          </>
+        )}
+
       </div>
 
       {!isIdle && !editing && !disabled && (

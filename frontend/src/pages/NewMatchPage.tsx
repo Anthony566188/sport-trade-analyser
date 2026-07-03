@@ -291,9 +291,9 @@ export const NewMatchPage: React.FC = () => {
               variant="block"
               initialBaseSeconds={0}
               initialAdditionalSeconds={0}
-              onConfirm={result => setTlTime(result)}
+              onChange={setTlTime}
+              hideControls={true}
               autoFocus={false}
-              confirmLabel="Definir tempo"
             />
             {tlTime.totalSeconds > 0 && (
               <p className="text-[11px] text-pitch-600 dark:text-pitch-400 font-medium">

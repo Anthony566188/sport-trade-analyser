@@ -17,7 +17,9 @@ interface TimeEditorProps {
   initialAdditionalSeconds?: number
   /** Se omitido, o período é sempre inferido automaticamente */
   initialPeriod?:            MatchPeriod
-  onConfirm: (result: TimeEditorResult) => void
+  onConfirm?: (result: TimeEditorResult) => void 
+  onChange?: (result: TimeEditorResult) => void  
+  hideControls?: boolean                      
   onCancel?: () => void
   /** inline → compacto (dentro do cronômetro)
    *  block  → formulário com labels (criação / encerramento) */
@@ -76,10 +78,12 @@ export const TimeEditor: React.FC<TimeEditorProps> = ({
   initialBaseSeconds       = 0,
   initialAdditionalSeconds = 0,
   onConfirm,
+  onChange,
   onCancel,
   variant      = 'inline',
   confirmLabel = 'Confirmar',
   autoFocus    = true,
+  hideControls = false,
 }) => {
   const [baseMin, setBaseMin] = useState(pad2(Math.floor(initialBaseSeconds / 60)))
   const [baseSec, setBaseSec] = useState(pad2(initialBaseSeconds % 60))
@@ -104,6 +108,22 @@ export const TimeEditor: React.FC<TimeEditorProps> = ({
   const addSeconds  = parseIntSafe(addMin)  * 60 + parseIntSafe(addSec)
   const showOvertime = isBreakpoint(baseSeconds)
   const totalSeconds = baseSeconds + (showOvertime ? addSeconds : 0)
+
+  // Mantém a referência mais recente do callback para evitar loops de renderização
+  const onChangeRef = useRef(onChange)
+  useEffect(() => {
+    onChangeRef.current = onChange
+  }, [onChange])
+
+  // Reporta em tempo real as mudanças isolando as dependências do callback
+  useEffect(() => {
+    if (onChangeRef.current) {
+      if (parseIntSafe(baseSec) > 59 || parseIntSafe(addSec) > 59) return
+      const period = inferPeriod(baseSeconds, showOvertime && addSeconds > 0)
+      const effectiveAdd = showOvertime ? addSeconds : 0
+      onChangeRef.current({ baseSeconds, additionalSeconds: effectiveAdd, period, totalSeconds: baseSeconds + effectiveAdd })
+    }
+  }, [baseSeconds, addSeconds, showOvertime, baseSec, addSec])
 
   const previewText = (() => {
     const m = Math.floor(baseSeconds / 60)
@@ -132,7 +152,9 @@ export const TimeEditor: React.FC<TimeEditorProps> = ({
     }
     const period       = inferPeriod(baseSeconds, showOvertime && addSeconds > 0)
     const effectiveAdd = showOvertime ? addSeconds : 0
-    onConfirm({ baseSeconds, additionalSeconds: effectiveAdd, period, totalSeconds: baseSeconds + effectiveAdd })
+    if (onConfirm) {
+      onConfirm({ baseSeconds, additionalSeconds: effectiveAdd, period, totalSeconds: baseSeconds + effectiveAdd })
+    }
   }, [baseSeconds, addSeconds, showOvertime, baseSec, addSec, onConfirm])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -223,7 +245,7 @@ export const TimeEditor: React.FC<TimeEditorProps> = ({
         )}
 
         {/* Botões inline */}
-        {variant === 'inline' && (
+        {variant === 'inline' && !hideControls && (
           <>
             <button onClick={commit} aria-label="Confirmar"
               className="p-1 ml-1 rounded text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors">
@@ -254,7 +276,7 @@ export const TimeEditor: React.FC<TimeEditorProps> = ({
       )}
 
       {/* Botões block */}
-      {isBlock && (
+      {isBlock && !hideControls && (
         <div className="flex items-center gap-2 pt-1">
           <button
             onClick={commit}
