@@ -8,9 +8,9 @@ import api from '../services/api'
 import { fetchChampionships } from '../services/teamService'
 import { TeamSearchInput } from '../components/team/TeamSearchInput'
 import { Spinner } from '../components/ui/Spinner'
-import { minSecToSeconds } from '../utils/time'
+import { TimeEditor } from '../components/timeline/TimeEditor'
+import type { TimeEditorResult } from '../components/timeline/TimeEditor'
 import { cn } from '../utils/cn'
-import { MatchPeriod } from '../types'
 import type { Team, Championship, TimelineRequestPayload } from '../types'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -42,8 +42,10 @@ export const NewMatchPage: React.FC = () => {
 
   // ── Timeline (opcional) ──
   const [createTimeline, setCreateTimeline] = useState(false)
-  const [tlMinutes,      setTlMinutes]      = useState(0)
-  const [tlSeconds,      setTlSeconds]      = useState(0)
+  const [tlTime, setTlTime] = useState<TimeEditorResult>({
+    baseSeconds: 0, additionalSeconds: 0,
+    period: 'FIRST_HALF' as any, totalSeconds: 0,
+  })
 
   // ── Submission ──
   const [submitting, setSubmitting] = useState(false)
@@ -103,12 +105,11 @@ export const NewMatchPage: React.FC = () => {
 
       // 2. Cria a timeline (OPCIONAL) — só se o usuário optou por isso
       if (createTimeline) {
-        const initialSeconds = minSecToSeconds(tlMinutes, tlSeconds)
         const payload: TimelineRequestPayload = {
-          id_match: match.id,
-          match_period_started: MatchPeriod.FIRST_HALF, // Placeholder (Task de UX futura)
-          minute_second_started: initialSeconds,
-          additional_minute_second_started: 0
+          id_match:                         match.id,
+          match_period_started:             tlTime.period,
+          minute_second_started:            tlTime.baseSeconds,
+          additional_minute_second_started: tlTime.additionalSeconds,
         }
         await api.post('/timeline', payload)
       }
@@ -286,46 +287,21 @@ export const NewMatchPage: React.FC = () => {
             <p className="text-xs text-turf-500 dark:text-turf-400">
               Se a partida já começou, informe o tempo atual para sincronizar a timeline.
             </p>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="number"
-                  min={0}
-                  max={120}
-                  value={tlMinutes}
-                  onChange={e => setTlMinutes(Math.max(0, Math.min(120, Number(e.target.value))))}
-                  aria-label="Minutos iniciais"
-                  className={cn(
-                    'w-16 text-center rounded-lg border-2 px-2 py-2.5 text-sm font-mono',
-                    'bg-white dark:bg-turf-800 border-turf-200 dark:border-turf-700',
-                    'text-turf-900 dark:text-turf-100',
-                    'focus:outline-none focus:border-pitch-500',
-                  )}
-                />
-                <span className="text-xs text-turf-400">min</span>
-              </div>
-              <span className="text-turf-300 font-bold">:</span>
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="number"
-                  min={0}
-                  max={59}
-                  value={tlSeconds}
-                  onChange={e => setTlSeconds(Math.max(0, Math.min(59, Number(e.target.value))))}
-                  aria-label="Segundos iniciais"
-                  className={cn(
-                    'w-16 text-center rounded-lg border-2 px-2 py-2.5 text-sm font-mono',
-                    'bg-white dark:bg-turf-800 border-turf-200 dark:border-turf-700',
-                    'text-turf-900 dark:text-turf-100',
-                    'focus:outline-none focus:border-pitch-500',
-                  )}
-                />
-                <span className="text-xs text-turf-400">seg</span>
-              </div>
-              <span className="text-xs text-turf-300 dark:text-turf-600 ml-1">
-                = {minSecToSeconds(tlMinutes, tlSeconds)}s
-              </span>
-            </div>
+            <TimeEditor
+              variant="block"
+              initialBaseSeconds={0}
+              initialAdditionalSeconds={0}
+              onConfirm={result => setTlTime(result)}
+              autoFocus={false}
+              confirmLabel="Definir tempo"
+            />
+            {tlTime.totalSeconds > 0 && (
+              <p className="text-[11px] text-pitch-600 dark:text-pitch-400 font-medium">
+                Tempo definido: {String(Math.floor(tlTime.baseSeconds / 60)).padStart(2,'0')}:{String(tlTime.baseSeconds % 60).padStart(2,'0')}
+                {tlTime.additionalSeconds > 0 && <>+{String(Math.floor(tlTime.additionalSeconds / 60)).padStart(2,'0')}:{String(tlTime.additionalSeconds % 60).padStart(2,'0')}</>}
+                {' '}({tlTime.period})
+              </p>
+            )}
           </div>
         )}
       </section>

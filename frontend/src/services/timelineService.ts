@@ -2,7 +2,7 @@ import api from './api';
 import type { Timeline, TimelineRequestPayload, MatchPeriod } from '../types';
 
 export interface StopTimelineParams {
-  match_period: MatchPeriod;
+  match_period_finished: MatchPeriod;
   minute_second_finished: number;
   additional_minute_second_finished: number;
 }
@@ -31,6 +31,6 @@ export const timelineService = {
    * PUT /timeline/stop/{id}
    */
   stop: async (id: number, params: StopTimelineParams): Promise<void> => {
-    await api.put(`/timeline/stop/${id}`, null, { params });
+    await api.put(`/timeline/stop/${id}`, params);
   },
 };

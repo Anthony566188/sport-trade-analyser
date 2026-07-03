@@ -15,6 +15,7 @@ import { betService } from '../services/betService'
 import { Spinner } from '../components/ui/Spinner'
 import { TimelineControls } from '../components/timeline/TimelineControls'
 import { CreateTimelinePainel } from '../components/timeline/CreateTimelinePainel'
+import { TimeEditor } from '../components/timeline/TimeEditor'
 import { BetWidget } from '../components/timeline/BetWidget'
 import type { PendingBet } from '../components/timeline/BetWidget'
 import { useChronometer } from '../hooks/useChronometer'
@@ -62,7 +63,8 @@ export const TimelinePage: React.FC = () => {
   const [pendingBets, setPendingBets] = useState<PendingBet[]>([])  // Apostas ainda não confirmadas
   const [criteria, setCriteria] = useState<Criterion[]>([])
   const [methods,  setMethods]  = useState<Method[]>([])
-  const [loading,  setLoading]  = useState(true)
+  const [loading,        setLoading]        = useState(true)
+  const [showStopConfirm, setShowStopConfirm] = useState(false)
   const [error,    setError]    = useState<string | null>(null)
 
   // ── Cronômetro ──
@@ -104,8 +106,10 @@ export const TimelinePage: React.FC = () => {
         if (tl) {
           const locationState = location.state as { autoStartTimeline?: boolean } | null
           const autoStart = locationState?.autoStartTimeline ?? false
-          
-          chronometer.initialize(tl.minute_second_started, autoStart)
+
+          const totalElapsed = tl.minute_second_started + (tl.additional_minute_second_started || 0)
+          chronometer.initialize(totalElapsed, autoStart)
+          chronometer.setMatchPeriod(tl.match_period_started)
           
           const [fetchedEvents, criteriaData, methodsData] = await Promise.all([
             timelineEventService.getByTimelineId(tl.id),
@@ -149,38 +153,60 @@ export const TimelinePage: React.FC = () => {
   }, [])
 
   // ── Criar timeline (separado da partida) ──────────────────────────────────
-  const handleCreateTimeline = useCallback(async (startSeconds: number) => {
+  const handleCreateTimeline = useCallback(async (
+    baseSeconds: number,
+    additionalSeconds: number,
+    period: MatchPeriod,
+  ) => {
     const payload: TimelineRequestPayload = {
-      id_match: matchId,
-      match_period_started: MatchPeriod.FIRST_HALF, // Placeholder
-      minute_second_started: startSeconds,
-      additional_minute_second_started: 0
+      id_match:                          matchId,
+      match_period_started:              period,
+      minute_second_started:             baseSeconds,
+      additional_minute_second_started:  additionalSeconds,
     }
 
     const tl = await timelineService.create(payload)
     setTimeline(tl)
-    chronometer.initialize(startSeconds, true)
+    // Inicializa o cronômetro com o elapsed total e o período inferido
+    chronometer.initialize(baseSeconds + additionalSeconds, true)
+    chronometer.setMatchPeriod(period)
 
     const fetchedEvents = await timelineEventService.getByTimelineId(tl.id)
     setEvents(fetchedEvents)
   }, [matchId, chronometer])
 
-  // ── Encerrar timeline ─────────────────────────────────────────────────────
-  const handleStopTimeline = useCallback(async () => {
-    if (!timeline || !confirm('Encerrar a timeline? Esta ação não pode ser desfeita.')) return
+  // ── Encerrar timeline — abre painel de confirmação ───────────────────────
+  const handleStopTimeline = useCallback(() => {
+    if (!timeline) return
+    setShowStopConfirm(true)
+  }, [timeline])
+
+  // ── Confirma o encerramento com o tempo revisado pelo usuário ─────────────
+  const handleConfirmStop = useCallback(async (
+    baseSeconds: number,
+    additionalSeconds: number,
+    period: MatchPeriod,
+  ) => {
+    if (!timeline) return
     try {
       await timelineService.stop(timeline.id, {
-        match_period: chronometer.period,
-        minute_second_finished: chronometer.minuteSecond,
-        additional_minute_second_finished: chronometer.additionalMinuteSecond 
+        match_period_finished:             period,
+        minute_second_finished:            baseSeconds,
+        additional_minute_second_finished: additionalSeconds,
       })
       chronometer.pause()
       setTimeline(prev => prev
-        ? { ...prev, minute_second_finished: chronometer.elapsed }
+        ? {
+            ...prev,
+            match_period_finished: period,
+            minute_second_finished: baseSeconds,
+            additional_minute_second_finished: additionalSeconds
+          }
         : prev
       )
+      setShowStopConfirm(false)
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao encerrar.')
+      alert(e instanceof Error ? e.message : 'Erro ao encerrar timeline.')
     }
   }, [timeline, chronometer])
 
@@ -384,6 +410,33 @@ export const TimelinePage: React.FC = () => {
           onPhaseTransition={chronometer.transitionPeriod}
           onStop={handleStopTimeline}
         />
+      )}
+
+      {/* Stop confirmation panel */}
+      {showStopConfirm && !isClosed && (
+        <div className={cn(
+          'rounded-2xl p-5 border',
+          'border-red-200 dark:border-red-900/60',
+          'bg-red-50 dark:bg-red-950/10',
+        )}>
+          <p className="text-sm font-semibold text-red-700 dark:text-red-400 mb-1">
+            Encerrar Timeline
+          </p>
+          <p className="text-xs text-red-500 dark:text-red-500 mb-4">
+            Confirme o tempo final da partida. Voce pode ajusta-lo antes de encerrar.
+          </p>
+          <TimeEditor
+            variant="block"
+            initialBaseSeconds={chronometer.minuteSecond}
+            initialAdditionalSeconds={chronometer.additionalMinuteSecond}
+            onConfirm={({ baseSeconds, additionalSeconds, period }) =>
+              handleConfirmStop(baseSeconds, additionalSeconds, period)
+            }
+            onCancel={() => setShowStopConfirm(false)}
+            confirmLabel="Confirmar Encerramento"
+            autoFocus
+          />
+        </div>
       )}
 
       {/* ── Registrar evento ── */}
