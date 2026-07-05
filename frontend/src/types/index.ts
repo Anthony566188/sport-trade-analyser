@@ -216,6 +216,12 @@ export interface Bet {
   exit_additional_minute_second: number | null;
 }
 
+export interface FrequentSelectionResponse {
+  id_criterion: number | null;
+  title: string | null;
+  event: string | null;
+}
+
 // ─── API / UI Helpers ────────────────────────────────────────────────────────
 
 export interface ApiError {

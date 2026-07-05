@@ -16,6 +16,7 @@ import { Spinner } from '../components/ui/Spinner'
 import { TimelineControls } from '../components/timeline/TimelineControls'
 import { CreateTimelinePainel } from '../components/timeline/CreateTimelinePainel'
 import { TimeEditor } from '../components/timeline/TimeEditor'
+import { QuickEventSelector } from '../components/timeline/QuickEventSelector'
 import { BetWidget } from '../components/timeline/BetWidget'
 import type { PendingBet } from '../components/timeline/BetWidget'
 import { useChronometer } from '../hooks/useChronometer'
@@ -437,6 +438,19 @@ export const TimelinePage: React.FC = () => {
             autoFocus
           />
         </div>
+      )}
+
+      {/* ── Registro rápido de eventos ── */}
+      {timeline && !isClosed && match && (
+        <QuickEventSelector
+          timelineId={timeline.id}
+          teamHome={match.team_home}
+          teamAway={match.team_away}
+          currentPeriod={chronometer.period}
+          minuteSecond={chronometer.minuteSecond}
+          additionalMinuteSecond={chronometer.additionalMinuteSecond}
+          onEventCreated={newEvent => setEvents(prev => [newEvent, ...prev])}
+        />
       )}
 
       {/* ── Registrar evento ── */}

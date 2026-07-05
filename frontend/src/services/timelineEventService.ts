@@ -1,7 +1,15 @@
 import api from './api';
-import type { TimelineEvent, TimelineEventRequestPayload, UpdateTimelineEventRequestPayload } from '../types';
+import type { FrequentSelectionResponse, TimelineEvent, TimelineEventRequestPayload, UpdateTimelineEventRequestPayload } from '../types';
 
 export const timelineEventService = {
+  /**
+   * Restorna os evntos e criterios mais usados 
+   */
+  getFrequentSelections: async (): Promise<FrequentSelectionResponse[]> => {
+    const { data } = await api.get<FrequentSelectionResponse[]>('/timeline-event/frequent/selections');
+    return data;
+  },
+
   /**
    * Busca todos os eventos registrados em uma timeline específica.
    * GET /timeline-event/timeline/{timelineId}
