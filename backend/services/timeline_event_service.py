@@ -8,6 +8,7 @@ from models.match import Match
 
 from models.timeline_event import TimelineEvent
 from models.value_objects.match_time import MatchTime
+from schemas.frequent_selection_response import FrequentSelectionResponse
 
 
 def timeline_register(timeline_event_data: TimelineEvent, db):
@@ -150,6 +151,60 @@ def delete_event(id, db):
 def get_by_timeline(id_timeline, db):
     timeline_repository.get_by_id(id_timeline, db)
     return repository.get_by_timeline(id_timeline, db)
+
+
+def get_frequent_selections(db) -> list[FrequentSelectionResponse]:
+    top_5_raw = repository.get_top_events_and_criteria(db, limit=5)
+    averages_raw = repository.get_criteria_averages(db)
+
+    averages_dict = {
+        row["id_criterion"]: row["media_por_partida"] or 0.0
+        for row in averages_raw
+    }
+
+    final_selections = []
+    top_5_criteria_averages = []
+
+    # Lista auxiliar para controle de duplicatas usando uma estrutura simples
+    # Salvamos tuplas de (tipo, id) para garantir que um evento não barre um critério com o mesmo ID
+    items_already_in_top_5 = []
+
+    # Processa o TOP 5 absoluto
+    for row in top_5_raw:
+        is_criterion = row["id_criterion"] is not None
+        item_type = "CRITERION" if is_criterion else "EVENT"
+
+        avg = averages_dict.get(row["id_criterion"]) if is_criterion else None
+
+        if is_criterion and avg is not None:
+            top_5_criteria_averages.append(avg)
+
+        # Guardamos no controle local
+        items_already_in_top_5.append((item_type, row["id_criterion"]))
+
+        final_selections.append(FrequentSelectionResponse(
+            id_criterion=row["id_criterion"],
+            title=row["title"],
+            event=row["event_name"],
+        ))
+
+    # Regra de Negócio para "HIGH_AVERAGE"
+    if top_5_criteria_averages:
+        min_top_5_avg = min(top_5_criteria_averages)
+
+        for row in averages_raw:
+            crit_id = row["id_criterion"]
+            avg = row["media_por_partida"] or 0.0
+
+            # Verificamos se já existe um CRITERION com esse id no top 5 usando a nossa lista de controle
+            if avg > min_top_5_avg and ("CRITERION", crit_id) not in items_already_in_top_5:
+                final_selections.append(FrequentSelectionResponse(
+                    id_criterion=crit_id,
+                    title=row["title"],
+                    event=None,
+                ))
+
+    return final_selections
 
 # Método privado que verifica se o time do evento está na partida
 def _has_team_in_match(team: str, match: Match):

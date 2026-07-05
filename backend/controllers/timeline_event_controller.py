@@ -1,8 +1,11 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 
 import services.timeline_event_service as service
+from schemas.frequent_selection_response import FrequentSelectionResponse
 
 from schemas.timeline_event_request import TimelineEventRequest
 from schemas.update_timeline_event import UpdateTimelineEvent
@@ -16,6 +19,13 @@ def register(request: TimelineEventRequest, db: Session = Depends(get_db)):
         return service.timeline_register(timeline, db)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/timeline-event/frequent/selections", response_model=List[FrequentSelectionResponse])
+def get_frequent_selections(db: Session = Depends(get_db)):
+    try:
+        return service.get_frequent_selections(db)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/timeline-event/{id}")
 def update_timeline_event(id: int, update: UpdateTimelineEvent, db: Session = Depends(get_db)):
