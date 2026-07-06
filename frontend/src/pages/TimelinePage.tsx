@@ -219,60 +219,48 @@ export const TimelinePage: React.FC = () => {
     setSelCrit('')
   }
 
-  // ── Registrar evento / critério ───────────────────────────────────────────
-  const handleAddEvent = async () => {
+  // ── Núcleo de persistência: recebe tudo explicitamente ───────────────────
+  const handleAutoRegister = async (
+    team:        string,
+    event:       EventType | null,
+    criterionId: number | null,
+  ) => {
     if (!timeline) return
-    if (!selTeam)  { setPanelError('Selecione o time.'); return }
 
     setAddingEvt(true)
     setPanelError(null)
 
-    const minuteSecond = chronometer.minuteSecond
-    const additionalMinuteSecond = chronometer.additionalMinuteSecond
-    const currentPeriod = chronometer.period
+    const payload: TimelineEventRequestPayload = {
+      id_timeline:              timeline.id,
+      event:                    event,
+      id_criterion:             criterionId,
+      match_period:             chronometer.period,
+      minute_second:            chronometer.minuteSecond,
+      additional_minute_second: chronometer.additionalMinuteSecond ?? 0,
+      team,
+    }
 
     try {
-      let newEvent: TimelineEvent | null = null
-
-      if (eventMode === 'event') {
-        if (!selEvent) { setPanelError('Selecione o tipo de evento.'); return }
-
-        const eventPayload: TimelineEventRequestPayload = {
-          id_timeline: timeline.id,
-          event: selEvent,
-          id_criterion: null,
-          match_period: currentPeriod,
-          minute_second: minuteSecond,
-          additional_minute_second: additionalMinuteSecond ?? 0,
-          team: selTeam,
-        }
-
-        newEvent = await timelineEventService.create(eventPayload)
-
-      } else if (eventMode === 'criterion') {
-        if (!selCrit) { setPanelError('Selecione um critério.'); return }
-
-        const criterionPayload: TimelineEventRequestPayload = {
-          id_timeline: timeline.id,
-          id_criterion: selCrit,
-          event: null,
-          match_period: currentPeriod,
-          minute_second: minuteSecond,
-          additional_minute_second: additionalMinuteSecond ?? 0,
-          team: selTeam,
-        }
-
-        newEvent = await timelineEventService.create(criterionPayload)
-      }
-
-      if (newEvent) setEvents(prev => [newEvent!, ...prev])
-
+      const newEvent = await timelineEventService.create(payload)
+      setEvents(prev => [newEvent, ...prev])
       setShowPanel(false)
       handleSetEventMode('event')
     } catch (e) {
       setPanelError(e instanceof Error ? e.message : 'Erro ao registrar.')
     } finally {
       setAddingEvt(false)
+    }
+  }
+
+  // ── Registrar evento / critério (fallback manual) ─────────────────────────
+  const handleAddEvent = async () => {
+    if (!selTeam) { setPanelError('Selecione o time.'); return }
+    if (eventMode === 'event') {
+      if (!selEvent) { setPanelError('Selecione o tipo de evento.'); return }
+      await handleAutoRegister(selTeam, selEvent, null)
+    } else {
+      if (!selCrit) { setPanelError('Selecione um critério.'); return }
+      await handleAutoRegister(selTeam, null, Number(selCrit))
     }
   }
 
@@ -505,35 +493,59 @@ export const TimelinePage: React.FC = () => {
 
               {/* Seleção de Time */}
               <div>
-                <label className="field-label" htmlFor="sel-team">Time</label>
-                <select
-                  id="sel-team"
-                  value={selTeam}
-                  onChange={e => setSelTeam(e.target.value)}
-                  className="field-select"
-                >
-                  <option value="">Selecione...</option>
-                  <option value={match.team_home}>{match.team_home}</option>
-                  <option value={match.team_away}>{match.team_away}</option>
-                </select>
+                <label className="field-label">Time</label>
+                <div className="flex gap-2">
+                  {[match.team_home, match.team_away].map(team => (
+                    <button
+                      key={team}
+                      type="button"
+                      onClick={() => setSelTeam(team)}
+                      className={cn(
+                        'flex-1 py-2 px-3 rounded-lg text-sm font-medium border-2 transition-colors truncate',
+                        selTeam === team
+                          ? 'border-pitch-500 bg-pitch-50 dark:bg-pitch-950/30 text-pitch-700 dark:text-pitch-300'
+                          : 'border-turf-200 dark:border-turf-700 text-turf-600 dark:text-turf-300 hover:border-turf-400 dark:hover:border-turf-500',
+                      )}
+                    >
+                      {team}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Modo Evento */}
               {eventMode === 'event' && (
                 <div>
-                  <label className="field-label">Tipo de Evento</label>
+                  <label className="field-label">
+                    Tipo de Evento
+                    {!selTeam && (
+                      <span className="ml-2 text-[10px] font-normal text-amber-500 dark:text-amber-400 normal-case">
+                        — selecione um time primeiro
+                      </span>
+                    )}
+                  </label>
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2" role="group" aria-label="Tipos de evento">
                     {(Object.keys(EVENT_ICONS) as EventType[]).map(evt => (
                       <button
                         key={evt}
+                        type="button"
                         role="radio"
                         aria-checked={selEvent === evt}
-                        onClick={() => setSelEvent(evt)}
+                        disabled={addingEvt}
+                        onClick={() => {
+                          setSelEvent(evt)
+                          if (selTeam) {
+                            handleAutoRegister(selTeam, evt, null)
+                          } else {
+                            setPanelError('Selecione o time antes de registrar.')
+                          }
+                        }}
                         className={cn(
                           'flex flex-col items-center gap-1 py-2 rounded-lg text-[10px] font-medium border transition-colors',
                           selEvent === evt
                             ? 'border-pitch-500 bg-pitch-50 dark:bg-pitch-950/30 text-pitch-700 dark:text-pitch-300'
                             : 'border-turf-200 dark:border-turf-700 text-turf-500 dark:text-turf-400 hover:border-turf-300',
+                          'disabled:opacity-50 disabled:cursor-not-allowed',
                         )}
                       >
                         <span className="text-base">{EVENT_ICONS[evt]}</span>
@@ -547,7 +559,14 @@ export const TimelinePage: React.FC = () => {
               {/* Modo Critério */}
               {eventMode === 'criterion' && (
                 <div>
-                  <label className="field-label" htmlFor="sel-criterion">Critério</label>
+                  <label className="field-label" htmlFor="sel-criterion">
+                    Critério
+                    {!selTeam && (
+                      <span className="ml-2 text-[10px] font-normal text-amber-500 dark:text-amber-400 normal-case">
+                        — selecione um time primeiro
+                      </span>
+                    )}
+                  </label>
                   {criteria.length === 0 ? (
                     <p className="text-xs text-turf-400 dark:text-turf-500 py-2">
                       Nenhum critério cadastrado.{' '}
@@ -557,8 +576,17 @@ export const TimelinePage: React.FC = () => {
                     <select
                       id="sel-criterion"
                       value={selCrit}
-                      onChange={e => setSelCrit(e.target.value ? Number(e.target.value) : '')}
-                      className="field-select"
+                      disabled={addingEvt}
+                      onChange={e => {
+                        const id = e.target.value ? Number(e.target.value) : ''
+                        setSelCrit(id)
+                        if (id && selTeam) {
+                          handleAutoRegister(selTeam, null, Number(id))
+                        } else if (id && !selTeam) {
+                          setPanelError('Selecione o time antes de registrar.')
+                        }
+                      }}
+                      className="field-select disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <option value="">Selecione um critério...</option>
                       {criteria.map(c => (
