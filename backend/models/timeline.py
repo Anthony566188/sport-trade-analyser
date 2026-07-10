@@ -8,9 +8,13 @@ class Timeline(Base):
 
     id = Column(Integer, primary_key=True)
 
-    id_match = Column(Integer, ForeignKey('MATCHES.id'), unique=True)
+    id_match = Column(Integer, ForeignKey('MATCHES.id'))
 
     match = relationship("Match", back_populates="timeline")
+
+    home_goals = Column(Integer, nullable=False)
+
+    away_goals = Column(Integer, nullable=False)
 
     match_period_started = Column(String, nullable=False)
 

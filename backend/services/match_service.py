@@ -21,8 +21,6 @@ def register_match(db,match_data):
     match = Match(
         team_home=match_data.team_home,
         team_away=match_data.team_away,
-        home_goals=match_data.home_goals,
-        away_goals=match_data.away_goals,
         championship=match_data.championship,
         date=match_data.date,
         is_neutral_field=match_data.is_neutral_field,
@@ -41,8 +39,6 @@ def update_match(id, match_updated, db):
 
     match.team_home = match_updated.team_home
     match.team_away = match_updated.team_away
-    match.home_goals = match_updated.home_goals
-    match.away_goals = match_updated.away_goals
     match.championship = match_updated.championship
     match.date = match_updated.date
     match.is_neutral_field = match_updated.is_neutral_field

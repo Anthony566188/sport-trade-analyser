@@ -56,6 +56,14 @@ def timeline_register(timeline_event_data: TimelineEvent, db):
     else:
         _validate_timeline_range(event_time, timeline_start_time, None)
 
+    # Atualiza a o placar
+    if timeline_event_data.event == EventType.GOAL.value:
+        if match.team_home == team:
+            timeline.home_goals += 1
+        else:
+            timeline.away_goals += 1
+        timeline_repository.update(timeline, db)
+
 
     timeline_event = TimelineEvent(
         id_criterion=timeline_event_data.id_criterion,
@@ -69,6 +77,7 @@ def timeline_register(timeline_event_data: TimelineEvent, db):
 
     return repository.timeline_register(timeline_event, db)
 
+'''
 def update_timeline_event(id, update_timeline_event: TimelineEvent, db):
     # Busca o timeline_event
     timeline_event: TimelineEvent = repository.get_by_id(id, db)
@@ -127,6 +136,7 @@ def update_timeline_event(id, update_timeline_event: TimelineEvent, db):
     timeline_event.team = update_timeline_event.team
 
     return repository.update_timeline_event(timeline_event, db)
+'''
 
 def delete_event(id, db):
     timeline_event = repository.get_by_id(id, db)
@@ -141,9 +151,9 @@ def delete_event(id, db):
     # Atualiza a o placar
     if timeline_event.event == EventType.GOAL.value:
         if match.team_home == team:
-            match.home_goals -= 1
+            timeline.home_goals -= 1
         else:
-            match.away_goals -= 1
+            timeline.away_goals -= 1
         match_repository.update(match, db)
 
     return repository.delete_event(timeline_event, db)
