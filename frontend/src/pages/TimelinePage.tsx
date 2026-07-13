@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, Link, useLocation } from 'react-router-dom'
 import {
-  ArrowLeft, Plus, Zap, Target, Trash2, AlertCircle
+  ArrowLeft, Plus, Zap, Target, Trash2, AlertCircle, Layers, PlayCircle
 } from 'lucide-react'
 
 // Serviços extraídos
@@ -57,15 +57,17 @@ export const TimelinePage: React.FC = () => {
   const matchId = Number(id)
 
   // ── Dados remotos ──
-  const [match,    setMatch]    = useState<Match    | null>(null)
-  const [timeline, setTimeline] = useState<Timeline | null>(null)
-  const [events,   setEvents]   = useState<TimelineEvent[]>([])
+  const [match,        setMatch]        = useState<Match    | null>(null)
+  const [allTimelines, setAllTimelines] = useState<Timeline[]>([])
+  const [timeline,     setTimeline]     = useState<Timeline | null>(null)
+  const [events,       setEvents]       = useState<TimelineEvent[]>([])
   const [bets,     setBets]     = useState<Record<number, Bet>>({}) // Cache local das apostas na timeline
   const [pendingBets, setPendingBets] = useState<PendingBet[]>([])  // Apostas ainda não confirmadas
   const [criteria, setCriteria] = useState<Criterion[]>([])
   const [methods,  setMethods]  = useState<Method[]>([])
-  const [loading,        setLoading]        = useState(true)
+  const [loading,         setLoading]         = useState(true)
   const [showStopConfirm, setShowStopConfirm] = useState(false)
+  const [showCreateNew,   setShowCreateNew]   = useState(false)
   const [error,    setError]    = useState<string | null>(null)
 
   // ── Cronômetro ──
@@ -87,33 +89,33 @@ export const TimelinePage: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [matchData, tlData, fetchedBets] = await Promise.all([
+        const [matchData, timelines, fetchedBets] = await Promise.all([
           matchService.getById(matchId),
-          timelineService.getByMatchId(matchId).catch(() => null),
-          // Traz todas as apostas já atreladas a esta partida. 
-          // O .catch evita quebrar a tela se houver erro
-          betService.getByMatchId(matchId).catch(() => []), 
+          timelineService.getByMatchId(matchId).catch(() => [] as Timeline[]),
+          betService.getByMatchId(matchId).catch(() => []),
         ])
         setMatch(matchData)
+        setAllTimelines(timelines)
 
-        const tl = tlData ?? null
-        setTimeline(tl)
+        // A timeline ativa é a única sem data de encerramento
+        const active = timelines.find(t => t.match_period_finished === null) ?? null
+        setTimeline(active)
 
         // Populando cache de apostas a partir do novo endpoint
         const newBets: Record<number, Bet> = {};
         fetchedBets.forEach((b: Bet) => { newBets[b.id] = b });
         setBets(newBets);
 
-        if (tl) {
+        if (active) {
           const locationState = location.state as { autoStartTimeline?: boolean } | null
           const autoStart = locationState?.autoStartTimeline ?? false
 
-          const totalElapsed = tl.minute_second_started + (tl.additional_minute_second_started || 0)
+          const totalElapsed = active.minute_second_started + (active.additional_minute_second_started || 0)
           chronometer.initialize(totalElapsed, autoStart)
-          chronometer.setMatchPeriod(tl.match_period_started)
+          chronometer.setMatchPeriod(active.match_period_started)
           
           const [fetchedEvents, criteriaData, methodsData] = await Promise.all([
-            timelineEventService.getByTimelineId(tl.id),
+            timelineEventService.getByTimelineId(active.id),
             criterionService.getAll(),
             methodService.getAll(),
           ])
@@ -158,9 +160,13 @@ export const TimelinePage: React.FC = () => {
     baseSeconds: number,
     additionalSeconds: number,
     period: MatchPeriod,
+    homeGoals: number,
+    awayGoals: number,
   ) => {
     const payload: TimelineRequestPayload = {
       id_match:                          matchId,
+      home_goals:                        homeGoals,
+      away_goals:                        awayGoals,
       match_period_started:              period,
       minute_second_started:             baseSeconds,
       additional_minute_second_started:  additionalSeconds,
@@ -168,6 +174,8 @@ export const TimelinePage: React.FC = () => {
 
     const tl = await timelineService.create(payload)
     setTimeline(tl)
+    setAllTimelines(prev => [...prev, tl])
+    setShowCreateNew(false)
     // Inicializa o cronômetro com o elapsed total e o período inferido
     chronometer.initialize(baseSeconds + additionalSeconds, true)
     chronometer.setMatchPeriod(period)
@@ -205,6 +213,11 @@ export const TimelinePage: React.FC = () => {
           }
         : prev
       )
+      setAllTimelines(prev => prev.map(t =>
+        t.id === timeline.id
+          ? { ...t, match_period_finished: period, minute_second_finished: baseSeconds, additional_minute_second_finished: additionalSeconds }
+          : t
+      ))
       setShowStopConfirm(false)
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Erro ao encerrar timeline.')
@@ -372,9 +385,101 @@ export const TimelinePage: React.FC = () => {
         </div>
       </div>
 
+      {/* ── Histórico de Timelines ── */}
+      {allTimelines.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-turf-500 dark:text-turf-500" />
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-turf-500 dark:text-turf-500">
+                Timelines
+              </span>
+            </div>
+            {/* Nova Timeline: só quando todas encerradas e não está criando */}
+            {allTimelines.every(t => t.match_period_finished !== null) && !showCreateNew && (
+              <button
+                onClick={() => setShowCreateNew(true)}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium',
+                  'bg-pitch-600 hover:bg-pitch-700 text-white transition-colors',
+                )}
+              >
+                <PlayCircle className="w-3.5 h-3.5" />
+                Nova Timeline
+              </button>
+            )}
+          </div>
+          <ul className="space-y-1.5">
+            {allTimelines.map(tl => {
+              const isActive = tl.match_period_finished === null
+              const startStr = matchTimeToDisplay({
+                period: tl.match_period_started,
+                minute_second: tl.minute_second_started,
+                additional_minute_second: tl.additional_minute_second_started,
+              })
+              const endStr = tl.match_period_finished !== null && tl.minute_second_finished !== null
+                ? matchTimeToDisplay({
+                    period: tl.match_period_finished,
+                    minute_second: tl.minute_second_finished,
+                    additional_minute_second: tl.additional_minute_second_finished,
+                  })
+                : null
+              return (
+                <li
+                  key={tl.id}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2 rounded-xl border text-xs',
+                    isActive
+                      ? 'bg-pitch-50 dark:bg-pitch-950/20 border-pitch-300 dark:border-pitch-800'
+                      : 'bg-turf-50 dark:bg-turf-800/30 border-turf-200 dark:border-turf-700',
+                  )}
+                >
+                  {/* Status dot */}
+                  {isActive
+                    ? <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    : <span className="w-2 h-2 rounded-full bg-turf-300 dark:bg-turf-600 shrink-0" />
+                  }
+                  {/* Tempo */}
+                  <span className={cn('font-mono', isActive ? 'text-pitch-700 dark:text-pitch-300' : 'text-turf-500 dark:text-turf-400')}>
+                    {startStr}
+                    {endStr ? <> → {endStr}</> : <span className="text-emerald-600 dark:text-emerald-400"> → Em andamento</span>}
+                  </span>
+                  {/* Placar */}
+                  <span className={cn(
+                    'ml-auto font-mono font-bold px-2 py-0.5 rounded',
+                    isActive
+                      ? 'bg-pitch-100 dark:bg-pitch-950/40 text-pitch-700 dark:text-pitch-300'
+                      : 'bg-turf-100 dark:bg-turf-700 text-turf-600 dark:text-turf-300',
+                  )}>
+                    {tl.home_goals} : {tl.away_goals}
+                  </span>
+                  {isActive && (
+                    <span className="badge bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 shrink-0">
+                      Em andamento
+                    </span>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
+
       {/* ── Cronômetro / Criar timeline ── */}
-      {!timeline ? (
-        <CreateTimelinePainel onConfirm={handleCreateTimeline} />
+      {showCreateNew && match ? (
+        <CreateTimelinePainel
+          teamHome={match.team_home}
+          teamAway={match.team_away}
+          onConfirm={handleCreateTimeline}
+        />
+      ) : !timeline ? (
+        match ? (
+          <CreateTimelinePainel
+            teamHome={match.team_home}
+            teamAway={match.team_away}
+            onConfirm={handleCreateTimeline}
+          />
+        ) : null
       ) : isClosed ? (
         <div className={cn(
           'rounded-2xl p-5 flex items-center gap-4 border',

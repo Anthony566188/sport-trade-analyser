@@ -159,12 +159,7 @@ export const MatchesPage: React.FC = () => {
                       <span className="font-semibold text-sm text-turf-900 dark:text-turf-100 truncate">
                         {match.team_home}
                       </span>
-                      <span className={cn(
-                        'px-2 py-0.5 rounded font-mono text-xs font-bold',
-                        'bg-turf-100 dark:bg-turf-700 text-turf-700 dark:text-turf-200',
-                      )}>
-                        {match.home_goals} : {match.away_goals}
-                      </span>
+                      <span className="text-turf-400 dark:text-turf-600 font-bold text-sm">×</span>
                       <span className="font-semibold text-sm text-turf-900 dark:text-turf-100 truncate">
                         {match.team_away}
                       </span>

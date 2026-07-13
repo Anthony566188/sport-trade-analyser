@@ -9,11 +9,11 @@ export interface StopTimelineParams {
 
 export const timelineService = {
   /**
-   * Busca a timeline correspondente a uma partida.
+   * Busca as timelines correspondente a uma partida.
    * GET /timeline/match/{matchId}
    */
-  getByMatchId: async (matchId: number): Promise<Timeline> => {
-    const { data } = await api.get<Timeline>(`/timeline/match/${matchId}`);
+  getByMatchId: async (matchId: number): Promise<Timeline[]> => {
+    const { data } = await api.get<Timeline[]>(`/timeline/match/${matchId}`);
     return data;
   },
 

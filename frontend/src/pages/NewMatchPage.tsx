@@ -33,8 +33,6 @@ export const NewMatchPage: React.FC = () => {
   const [isNeutralField,  setIsNeutralField]   = useState(false)
   const [homeTeam,        setHomeTeam]         = useState<Team | null>(null)
   const [awayTeam,        setAwayTeam]         = useState<Team | null>(null)
-  const [homeGoals,       setHomeGoals]        = useState(0)
-  const [awayGoals,       setAwayGoals]        = useState(0)
   const [date,            setDate]             = useState(todayLocal())
   const [championshipId,  setChampionshipId]   = useState<number | ''>('')
   const [championships,   setChampionships]    = useState<Championship[]>([])
@@ -46,6 +44,8 @@ export const NewMatchPage: React.FC = () => {
     baseSeconds: 0, additionalSeconds: 0,
     period: 'FIRST_HALF' as any, totalSeconds: 0,
   })
+  const [tlHomeGoals, setTlHomeGoals] = useState(0)
+  const [tlAwayGoals, setTlAwayGoals] = useState(0)
 
   // ── Submission ──
   const [submitting, setSubmitting] = useState(false)
@@ -89,12 +89,10 @@ export const NewMatchPage: React.FC = () => {
     setApiError(null)
 
     try {
-      // 1. Cria a partida
+      // 1. Cria a partida (sem placar — agora pertence à Timeline)
       const { data: match } = await api.post('/matches', {
         team_home:        homeTeam.name,
         team_away:        awayTeam.name,
-        home_goals:       homeGoals,
-        away_goals:       awayGoals,
         championship:     isFriendly
           ? null
           : (championships.find(c => c.id === championshipId)?.name ?? null),
@@ -107,6 +105,8 @@ export const NewMatchPage: React.FC = () => {
       if (createTimeline) {
         const payload: TimelineRequestPayload = {
           id_match:                         match.id,
+          home_goals:                       tlHomeGoals,
+          away_goals:                       tlAwayGoals,
           match_period_started:             tlTime.period,
           minute_second_started:            tlTime.baseSeconds,
           additional_minute_second_started: tlTime.additionalSeconds,
@@ -228,15 +228,6 @@ export const NewMatchPage: React.FC = () => {
             disabled={!isFriendly && !championshipId}
           />
         </div>
-
-        {/* Placar inicial */}
-        {homeTeam && awayTeam && (
-          <div className="flex items-center justify-center gap-4 py-3 px-4 rounded-xl bg-turf-50 dark:bg-turf-800/40 border border-turf-100 dark:border-turf-700">
-            <GoalInput label={homeTeam.name} value={homeGoals} onChange={setHomeGoals} />
-            <span className="font-mono font-bold text-lg text-turf-400 dark:text-turf-500 select-none">×</span>
-            <GoalInput label={awayTeam.name} value={awayGoals} onChange={setAwayGoals} align="right" />
-          </div>
-        )}
       </section>
 
       {/* ── Data da Partida ── */}
@@ -278,30 +269,45 @@ export const NewMatchPage: React.FC = () => {
           />
         </div>
 
-        {/* Campos de tempo — só exibidos quando o toggle está ativo */}
+        {/* Campos de tempo e placar — só exibidos quando o toggle está ativo */}
         {createTimeline && (
           <div className={cn(
             'p-4 rounded-xl border border-turf-200 dark:border-turf-700',
-            'bg-turf-50 dark:bg-turf-800/40 space-y-3',
+            'bg-turf-50 dark:bg-turf-800/40 space-y-4',
           )}>
-            <p className="text-xs text-turf-500 dark:text-turf-400">
-              Se a partida já começou, informe o tempo atual para sincronizar a timeline.
-            </p>
-            <TimeEditor
-              variant="block"
-              initialBaseSeconds={0}
-              initialAdditionalSeconds={0}
-              onChange={setTlTime}
-              hideControls={true}
-              autoFocus={false}
-            />
-            {tlTime.totalSeconds > 0 && (
-              <p className="text-[11px] text-pitch-600 dark:text-pitch-400 font-medium">
-                Tempo definido: {String(Math.floor(tlTime.baseSeconds / 60)).padStart(2,'0')}:{String(tlTime.baseSeconds % 60).padStart(2,'0')}
-                {tlTime.additionalSeconds > 0 && <>+{String(Math.floor(tlTime.additionalSeconds / 60)).padStart(2,'0')}:{String(tlTime.additionalSeconds % 60).padStart(2,'0')}</>}
-                {' '}({tlTime.period})
+            {/* Placar da Timeline */}
+            <div>
+              <p className="text-xs font-medium text-turf-500 dark:text-turf-400 uppercase tracking-wide mb-2">
+                Placar
               </p>
-            )}
+              <div className="flex items-center justify-center gap-4 py-3 px-4 rounded-xl bg-white dark:bg-turf-800 border border-turf-200 dark:border-turf-700">
+                <GoalInput label={homeTeam?.name ?? 'Casa'} value={tlHomeGoals} onChange={setTlHomeGoals} />
+                <span className="font-mono font-bold text-lg text-turf-400 dark:text-turf-500 select-none">×</span>
+                <GoalInput label={awayTeam?.name ?? 'Visitante'} value={tlAwayGoals} onChange={setTlAwayGoals} align="right" />
+              </div>
+            </div>
+
+            {/* Tempo inicial */}
+            <div>
+              <p className="text-xs text-turf-500 dark:text-turf-400 mb-2">
+                Se a partida já começou, informe o tempo atual para sincronizar a timeline.
+              </p>
+              <TimeEditor
+                variant="block"
+                initialBaseSeconds={0}
+                initialAdditionalSeconds={0}
+                onChange={setTlTime}
+                hideControls={true}
+                autoFocus={false}
+              />
+              {tlTime.totalSeconds > 0 && (
+                <p className="text-[11px] text-pitch-600 dark:text-pitch-400 font-medium mt-2">
+                  Tempo definido: {String(Math.floor(tlTime.baseSeconds / 60)).padStart(2,'0')}:{String(tlTime.baseSeconds % 60).padStart(2,'0')}
+                  {tlTime.additionalSeconds > 0 && <>+{String(Math.floor(tlTime.additionalSeconds / 60)).padStart(2,'0')}:{String(tlTime.additionalSeconds % 60).padStart(2,'0')}</>}
+                  {' '}({tlTime.period})
+                </p>
+              )}
+            </div>
           </div>
         )}
       </section>

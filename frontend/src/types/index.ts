@@ -19,8 +19,6 @@ export interface Match {
   id: number;
   team_home: string;
   team_away: string;
-  home_goals: number;
-  away_goals: number;
   championship: string | null;
   date: string; // YYYY-MM-DD
   is_neutral_field: boolean;
@@ -31,6 +29,8 @@ export interface Match {
 export interface Timeline {
   id: number;
   id_match: number;
+  home_goals: number;
+  away_goals: number;
   match_period_started: MatchPeriod;
   minute_second_started: number;
   additional_minute_second_started: number | null;
@@ -89,6 +89,8 @@ export const MATCH_PERIOD_LABELS: Record<MatchPeriod, string> = {
 
 export interface TimelineRequestPayload {
   id_match: number;
+  home_goals: number;
+  away_goals: number;
   match_period_started: MatchPeriod;
   minute_second_started: number;
   additional_minute_second_started?: number;
@@ -151,8 +153,6 @@ export interface BetExitRequestPayload {
 export interface MatchRequestPayload {
   team_home: string;
   team_away: string;
-  home_goals: number;
-  away_goals: number;
   championship: string | null;
   date: string;
   is_neutral_field: boolean;
